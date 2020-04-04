@@ -1,3 +1,7 @@
+declare interface Math {
+  log2(x: number): number;
+}
+
 /**
  * Get bit count for value. Any value will have at least 1 bit length. Negative value gets +1 for sign.
  * @param Value to be calculated.

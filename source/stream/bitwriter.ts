@@ -1,10 +1,10 @@
-import { reverseBitOrder } from './../../utils/reverseBitOrder';
+import { reverseBitOrder } from '../utils/reverseBitOrder';
 import { IBaseBitRW } from './ibitstream';
 import { DynamicDataSource } from './datasource';
 import { TypedArray, IDataSource } from './idatasource';
 import { BaseBitRW } from './basebitrw';
-import { getSliceOf } from '../../utils/getSliceOf';
-import { Endian } from '../../endian';
+import { getSliceOf } from '../utils/getSliceOf';
+import { Endian } from '../endian';
 
 export const createWritableSource = (data?: TypedArray) =>
   new DynamicDataSource(data || new Uint8Array(0xff));

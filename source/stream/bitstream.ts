@@ -5,7 +5,7 @@ import {
   BitWriter,
 } from './bitwriter';
 import { TypedArray, IDataSource } from './idatasource';
-import { Endian } from '../../endian';
+import { Endian } from '../endian';
 
 export class BitStream implements IBitReader, IBitWriter {
   private reader: BitReader;

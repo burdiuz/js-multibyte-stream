@@ -1,7 +1,7 @@
 import { DataSource } from './datasource';
 import { IDataSource, TypedArray } from './idatasource';
 import { IBaseBitRW } from './ibitstream';
-import { Endian } from '../../endian';
+import { Endian } from '../endian';
 
 export class BaseBitRW implements Partial<IBaseBitRW> {
   protected endian = Endian.BIG;

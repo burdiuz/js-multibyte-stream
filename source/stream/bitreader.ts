@@ -1,9 +1,9 @@
-import { getMaskOfLength } from './../../utils/getMaskOfLength';
+import { getMaskOfLength } from '../utils/getMaskOfLength';
 import { BaseBitRW } from './basebitrw';
 import { TypedArray, IDataSource } from './idatasource';
 import { DataSource } from './datasource';
-import { Endian } from '../../endian';
-import { reverseBitOrder } from '../../utils/reverseBitOrder';
+import { Endian } from '../endian';
+import { reverseBitOrder } from '../utils/reverseBitOrder';
 
 export class BitReader extends BaseBitRW {
   setData(data: TypedArray): void {

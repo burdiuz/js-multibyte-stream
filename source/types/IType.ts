@@ -1,3 +1,5 @@
+import { IBitWriter, IBitReader } from '../stream/ibitstream';
+
 export interface IType {
   writeTo(writer: IBitWriter): void;
   readFrom(writer: IBitReader): void;

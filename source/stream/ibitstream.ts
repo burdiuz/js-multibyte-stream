@@ -1,5 +1,5 @@
 import { TypedArray, IDataSource } from './idatasource';
-import { Endian } from './../../endian';
+import { Endian } from '../endian';
 
 export interface IBaseBitRW {
   setData(data: TypedArray): void;
