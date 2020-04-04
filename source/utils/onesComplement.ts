@@ -3,7 +3,7 @@ import { getMaskOfLength } from "./getMaskOfLength";
 /*
   Returns uint with identical bit values.
 */
-export const toOnesComplementRepresentation = (value, length) => {
+export const toOnesComplementRepresentation = (value:number, length:number) => {
   const valueLength = length - 1;
   const mask = getMaskOfLength(valueLength);
 
@@ -14,7 +14,7 @@ export const toOnesComplementRepresentation = (value, length) => {
   return (-value & mask) | (1 << valueLength);
 };
 
-export const fromOnesComplementRepresentation = (value, length) => {
+export const fromOnesComplementRepresentation = (value:number, length:number) => {
   const valueLength = length - 1;
   const mask = getMaskOfLength(valueLength);
   const sign = (value >>> valueLength) & 0b1;

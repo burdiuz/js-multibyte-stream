@@ -3,7 +3,7 @@
  * @param Value to be calculated.
  * @param Include a sign bit into calculation
  */
-export const getBitCount = (value) => {
+export const getBitCount = (value: number) => {
   if (!value) {
     return 1;
   }

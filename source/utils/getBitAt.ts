@@ -3,4 +3,5 @@
  * @param source Integer
  * @param position index
  */
-export const getBitAt = (value, position = 0) => (value >> position) & 1;
+export const getBitAt = (value: number, position = 0) =>
+  (value >> position) & 1;

@@ -1,6 +1,6 @@
 export const MAX_POW_INDEX = 31;
 
-export const POWS = ((index) => {
+export const POWS = ((index: number) => {
   const list = [];
 
   while (index >= 0) {
@@ -11,4 +11,4 @@ export const POWS = ((index) => {
   return list;
 })(MAX_POW_INDEX);
 
-export const getPositionBit = (index) => POWS[index];
+export const getPositionBit = (index: number) => POWS[index];

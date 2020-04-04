@@ -1,6 +1,6 @@
 export const MASK_MAX_INDEX = 31;
 
-export const MASKS = ((index) => {
+export const MASKS = ((index: number) => {
   const list = [0];
 
   while (index > 0) {
@@ -9,8 +9,8 @@ export const MASKS = ((index) => {
   }
 
   return list;
-})(MASK_MAX_LENGTH);
+})(MASK_MAX_INDEX);
 
 export const MAX_MASK = MASKS[MASK_MAX_INDEX];
 
-export const getMaskOfLength = (length) => MASKS[length];
+export const getMaskOfLength = (length: number) => MASKS[length];
