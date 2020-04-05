@@ -1,4 +1,4 @@
-import { getMaskOfLength } from './getMaskOfLength';
+import { getMaskOfLength, getBigIntMaskOfLength } from './getMaskOfLength';
 
 export const getSliceOf = (value: number, position: number, size: number) =>
   (value >> position) & getMaskOfLength(size);
@@ -22,3 +22,6 @@ export const toSlices = (value: number, ...sizes: number[]) => {
     return slice;
   });
 };
+
+export const getBigIntSliceOf = (value: bigint, position: bigint, size: bigint) =>
+  (value >> position) & getBigIntMaskOfLength(size);

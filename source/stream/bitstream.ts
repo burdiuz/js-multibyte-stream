@@ -1,34 +1,37 @@
 import { IBitReader, IBitWriter } from './ibitstream';
 import { BitReader } from './bitreader';
-import {
-  createWritableSource,
-  BitWriter,
-} from './bitwriter';
-import { TypedArray, IDataSource } from './idatasource';
+import { BitWriter } from './bitwriter';
+import { IDataSource } from './idatasource';
 import { Endian } from '../endian';
+import { TypedArray } from '../types';
 
 export class BitStream implements IBitReader, IBitWriter {
   private reader: BitReader;
   private writer: BitWriter;
 
-  constructor(data: TypedArray) {
+  constructor(data?: TypedArray) {
     this.writer = new BitWriter();
     this.reader = new BitReader();
 
-    if (data !== undefined) {
-      this.setData(data);
-    }
+    this.setData(data);
   }
 
-  setData(data: TypedArray): void {
-    const source = createWritableSource(data);
+  getData(): TypedArray {
+    return this.reader.getData();
+  }
 
-    this.setSource(source);
+  setData(data?: TypedArray): void {
+    this.writer.setData(data);
+    this.reader.setSource(this.writer.getSource());
+  }
+
+  getSource(): IDataSource {
+    return this.reader.getSource();
   }
 
   setSource(source: IDataSource): void {
     this.writer.setSource(source);
-    this.reader.setSource(source);
+    this.reader.setSource(this.writer.getSource());
   }
 
   getBitOrder(): Endian {
@@ -55,10 +58,6 @@ export class BitStream implements IBitReader, IBitWriter {
 
   getFrameSize(): number {
     return this.reader.getFrameSize();
-  }
-
-  getSource(): TypedArray {
-    return this.reader.getSource();
   }
 
   write(value: number, bitCount: number): void {

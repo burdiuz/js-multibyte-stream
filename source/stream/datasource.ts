@@ -1,4 +1,5 @@
-import { TypedArray, IDataSource } from './idatasource';
+import { IDataSource } from './idatasource';
+import { TypedArray } from '../types';
 
 export class DataSource implements IDataSource {
   protected source: TypedArray;

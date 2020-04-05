@@ -1,17 +1,18 @@
 import { reverseBitOrder } from '../utils/reverseBitOrder';
 import { IBaseBitRW } from './ibitstream';
 import { DynamicDataSource } from './datasource';
-import { TypedArray, IDataSource } from './idatasource';
+import { IDataSource } from './idatasource';
 import { BaseBitRW } from './basebitrw';
 import { getSliceOf } from '../utils/getSliceOf';
 import { Endian } from '../endian';
+import { TypedArray } from '../types';
 
 export const createWritableSource = (data?: TypedArray) =>
   new DynamicDataSource(data || new Uint8Array(0xff));
 
 export class BitWriter extends BaseBitRW implements IBaseBitRW {
-  setData(data: TypedArray): void {
-    this.source = new DynamicDataSource(data);
+  setData(data?: TypedArray): void {
+    this.source = new DynamicDataSource(data || undefined);
   }
 
   setSource(source: IDataSource): void {

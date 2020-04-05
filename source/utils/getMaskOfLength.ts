@@ -14,3 +14,6 @@ export const MASKS = ((index: number) => {
 export const MAX_MASK = MASKS[MASK_MAX_INDEX];
 
 export const getMaskOfLength = (length: number) => MASKS[length];
+
+export const getBigIntMaskOfLength = (length: bigint) =>
+  2n ** length - 1n;

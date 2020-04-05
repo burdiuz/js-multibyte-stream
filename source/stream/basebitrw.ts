@@ -1,15 +1,24 @@
 import { DataSource } from './datasource';
-import { IDataSource, TypedArray } from './idatasource';
+import { IDataSource } from './idatasource';
 import { IBaseBitRW } from './ibitstream';
 import { Endian } from '../endian';
+import { TypedArray } from '../types';
 
-export class BaseBitRW implements Partial<IBaseBitRW> {
+export class BaseBitRW implements IBaseBitRW {
   protected endian = Endian.BIG;
   protected framePosition = 0;
   protected source: IDataSource;
 
-  setData(data: TypedArray): void {
-    this.source = new DataSource(data);
+  getData(): TypedArray {
+    return this.source.getSource();
+  }
+
+  setData(data?: TypedArray): void {
+    this.source = new DataSource(data || undefined);
+  }
+
+  getSource(): IDataSource {
+    return this.source;
   }
 
   setSource(source: IDataSource): void {
@@ -46,9 +55,5 @@ export class BaseBitRW implements Partial<IBaseBitRW> {
 
   getFrameSize() {
     return this.source.getFrameSize();
-  }
-
-  getSource(): TypedArray {
-    return this.source.getSource();
   }
 }

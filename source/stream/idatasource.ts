@@ -1,8 +1,4 @@
-export type TypedArray =
-  | Uint8Array
-  | Uint8ClampedArray
-  | Uint16Array
-  | Uint32Array;
+import { TypedArray } from '../types';
 
 export interface IDataSource {
   getPosition(): number;

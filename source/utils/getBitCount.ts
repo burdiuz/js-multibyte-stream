@@ -18,3 +18,22 @@ export const getBitCount = (value: number) => {
 
   return Math.ceil(Math.log2(value)) + 1;
 };
+
+export const getBigIntBitCount = (value: bigint) => {
+  if (!value) {
+    return 1;
+  }
+
+  if (value < 0) {
+    value = -value;
+  }
+
+  let bits = 0;
+
+  while (value > 0) {
+    bits++;
+    value = value >> 1n;
+  }
+
+  return bits;
+};

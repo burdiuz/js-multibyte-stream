@@ -84,8 +84,14 @@ class BaseBitRW {
         this.endian = Endian.BIG;
         this.framePosition = 0;
     }
+    getData() {
+        return this.source.getSource();
+    }
     setData(data) {
-        this.source = new DataSource(data);
+        this.source = new DataSource(data || undefined);
+    }
+    getSource() {
+        return this.source;
     }
     setSource(source) {
         this.source = source;
@@ -111,9 +117,6 @@ class BaseBitRW {
     }
     getFrameSize() {
         return this.source.getFrameSize();
-    }
-    getSource() {
-        return this.source.getSource();
     }
 }
 
@@ -181,7 +184,7 @@ const getSliceOf = (value, position, size) => (value >> position) & getMaskOfLen
 const createWritableSource = (data) => new DynamicDataSource(data || new Uint8Array(0xff));
 class BitWriter extends BaseBitRW {
     setData(data) {
-        this.source = new DynamicDataSource(data);
+        this.source = new DynamicDataSource(data || undefined);
     }
     setSource(source) {
         this.source = source;
@@ -232,17 +235,21 @@ class BitStream {
     constructor(data) {
         this.writer = new BitWriter();
         this.reader = new BitReader();
-        if (data !== undefined) {
-            this.setData(data);
-        }
+        this.setData(data);
+    }
+    getData() {
+        return this.reader.getData();
     }
     setData(data) {
-        const source = createWritableSource(data);
-        this.setSource(source);
+        this.writer.setData(data);
+        this.reader.setSource(this.writer.getSource());
+    }
+    getSource() {
+        return this.reader.getSource();
     }
     setSource(source) {
         this.writer.setSource(source);
-        this.reader.setSource(source);
+        this.reader.setSource(this.writer.getSource());
     }
     getBitOrder() {
         return this.reader.getBitOrder();
@@ -263,9 +270,6 @@ class BitStream {
     }
     getFrameSize() {
         return this.reader.getFrameSize();
-    }
-    getSource() {
-        return this.reader.getSource();
     }
     write(value, bitCount) {
         this.writer.write(value, bitCount);

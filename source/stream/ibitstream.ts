@@ -1,8 +1,11 @@
-import { TypedArray, IDataSource } from './idatasource';
+import { IDataSource } from './idatasource';
 import { Endian } from '../endian';
+import { TypedArray } from '../types';
 
 export interface IBaseBitRW {
+  getData(): TypedArray;
   setData(data: TypedArray): void;
+  getSource(): IDataSource;
   setSource(source: IDataSource): void;
 
   getBitOrder(): Endian;
@@ -12,7 +15,6 @@ export interface IBaseBitRW {
   setPosition(value: number): void;
   getBytePosition(): number;
   getFrameSize(): number;
-  getSource(): TypedArray;
 }
 
 export interface IBitWriter {
