@@ -1,7 +1,11 @@
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
+import { copyWriterConfig } from '../stream/bitwriter';
+import { writeUIntLength, readUIntLength } from '../utils/lengths';
 
 /*
+Ideas for other string writing implementations
+
 static length:
 2 bits -- size of length block
 8 - 16 bits -- length of the value
@@ -26,14 +30,65 @@ cycle:
   2 bits -- size of length block
   4 - 16 bits -- length of the group
 */
+
+/*
+  Ordinary UTF-8 String
+  3 bits -- string length
+  0 ... bytes -- UTF-8 string
+*/
 export class StringType implements IType {
   static readonly type = 'string';
 
-  writeTo(writer: IBitWriter, value: string): void {}
+  writeTo(writer: IBitWriter, value: string): void {
+    const newChar = 1 << 7;
+    const chars = copyWriterConfig(writer);
+    const { length } = value;
 
-  readFrom(reader: IBitReader): any {}
+    for (let index = 0; index < length; index++) {
+      let char = value.charCodeAt(index);
+      let first = true;
 
-  toObject(type: StringType): ITypeData {
+      while (char) {
+        const part = char & 0b1111111;
+
+        chars.write(first ? newChar | part : part, 8);
+
+        char = char >> 7;
+        first = false;
+      }
+    }
+
+    const dataLength = chars.getPosition();
+
+    writeUIntLength(writer, dataLength);
+    writer.writeData(chars.getData(), dataLength);
+  }
+
+  readFrom(reader: IBitReader): string {
+    let value = '';
+    let charCode = 20;
+
+    const bitLength = readUIntLength(reader);
+
+    while (reader.getPosition() < bitLength) {
+      const part = reader.read(8);
+      const newChar = !!(part >> 7);
+
+      if (newChar) {
+        value = `${value}${String.fromCharCode(charCode)}`;
+        charCode = 0;
+      } else {
+        charCode = (charCode << 7) | (part & 0b1111111);
+      }
+    }
+
+    // add last read char code and remove first space
+    value = `${value.substr(1)}${String.fromCharCode(charCode)}`;
+
+    return value;
+  }
+
+  toObject(): ITypeData {
     return { type: StringType.type };
   }
 
@@ -45,7 +100,7 @@ export class StringType implements IType {
     return new StringType();
   }
 
-  static fromObject(data: ITypeData): StringType {
+  static fromObject(): StringType {
     return new StringType();
   }
 }

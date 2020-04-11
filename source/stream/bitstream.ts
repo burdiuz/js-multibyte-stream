@@ -65,6 +65,11 @@ export class BitStream implements IBitReader, IBitWriter {
     this.reader.setPosition(this.writer.getPosition());
   }
 
+  writeData(value: TypedArray, bitCount?: number): void {
+    this.writer.writeData(value, bitCount);
+    this.reader.setPosition(this.writer.getPosition());
+  }
+
   read(bitCount: number): number {
     const value = this.reader.read(bitCount);
     this.writer.setPosition(this.reader.getPosition());

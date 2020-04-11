@@ -5,8 +5,9 @@ import { DataSource } from './datasource';
 import { Endian } from '../endian';
 import { reverseBitOrder } from '../utils/reverseBitOrder';
 import { TypedArray } from '../types';
+import { IBitReader } from './ibitstream';
 
-export class BitReader extends BaseBitRW {
+export class BitReader extends BaseBitRW implements IBitReader {
   setData(data: TypedArray): void {
     this.source = new DataSource(data);
   }

@@ -17,7 +17,7 @@ export class DataSource implements IDataSource {
   }
 
   getFrameSize() {
-    return this.source.BYTES_PER_ELEMENT;
+    return this.source.BYTES_PER_ELEMENT << 3;
   }
 
   getCurrentFrame() {
@@ -25,7 +25,7 @@ export class DataSource implements IDataSource {
   }
 
   setCurrentFrame(value: number) {
-    return this.setFrame(value, this.position);
+    this.setFrame(value, this.position);
   }
 
   nextFrame() {
@@ -61,9 +61,26 @@ export class DataSource implements IDataSource {
   getSource() {
     return this.source;
   }
+
+  toString(start = 0, length = this.source.length - start) {
+    let str = '';
+
+    for (let index = 0; index < length; index++) {
+      const item = this.source[index] >>> 0;
+
+      str = `${str} ${item.toString(2).padStart(this.getFrameSize(), '0')}`;
+    }
+
+    return str;
+  }
 }
 
 export class DynamicDataSource extends DataSource {
+  constructor(source?: TypedArray) {
+    super(source);
+    this.validateLength();
+  }
+
   setPosition(value: number) {
     super.setPosition(value);
     this.validateLength();
@@ -72,11 +89,11 @@ export class DynamicDataSource extends DataSource {
   validateLength() {
     const {
       position,
-      source: { length }
+      source: { length },
     } = this;
 
     if (position >= length - 1) {
-      this.setLength(Math.ceil(Math.max(length, position) << 1));
+      this.setLength(Math.ceil(Math.max(length, position, 1) << 1));
     }
   }
 }

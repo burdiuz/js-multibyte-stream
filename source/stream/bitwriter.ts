@@ -1,5 +1,6 @@
+import { getMaskOfLength } from '../utils/getMaskOfLength';
 import { reverseBitOrder } from '../utils/reverseBitOrder';
-import { IBaseBitRW } from './ibitstream';
+import { IBitWriter } from './ibitstream';
 import { DynamicDataSource } from './datasource';
 import { IDataSource } from './idatasource';
 import { BaseBitRW } from './basebitrw';
@@ -10,7 +11,7 @@ import { TypedArray } from '../types';
 export const createWritableSource = (data?: TypedArray) =>
   new DynamicDataSource(data || new Uint8Array(0xff));
 
-export class BitWriter extends BaseBitRW implements IBaseBitRW {
+export class BitWriter extends BaseBitRW implements IBitWriter {
   setData(data?: TypedArray): void {
     this.source = new DynamicDataSource(data || undefined);
   }
@@ -47,6 +48,7 @@ export class BitWriter extends BaseBitRW implements IBaseBitRW {
 
       leftSpace -= currentSize;
       leftSize -= currentSize;
+      leftValue = leftValue & getMaskOfLength(leftSize);
 
       if (!leftSpace) {
         this.source.nextFrame();
@@ -55,6 +57,36 @@ export class BitWriter extends BaseBitRW implements IBaseBitRW {
     }
 
     this.framePosition = frameSize - leftSpace;
+  }
+
+  writeData(
+    value: TypedArray,
+    bitStart: number = 0,
+    bitLength: number = value.length * (value.BYTES_PER_ELEMENT << 3) - bitStart
+  ): void {
+    const frameSize = value.BYTES_PER_ELEMENT << 3;
+    const start = (bitStart / frameSize) | 0;
+    let leftLength = bitLength;
+    let index = start;
+
+    while (leftLength > 0) {
+      let size = frameSize;
+      let source = value[index];
+
+      if (index === start) {
+        size = frameSize - (bitStart % frameSize);
+        source = source & getMaskOfLength(size);
+      }
+
+      if (leftLength < size) {
+        size = leftLength;
+        source = (source >> (frameSize - size)) & getMaskOfLength(size);
+      }
+
+      this.write(source, size);
+      leftLength -= size;
+      index++;
+    }
   }
 
   writeBit(value: number) {
@@ -73,3 +105,15 @@ export class BitWriter extends BaseBitRW implements IBaseBitRW {
     return this.write(value | 0, 32);
   }
 }
+
+export const copyWriterConfig = (writer: IBitWriter): IBitWriter => {
+  const copy = new BitWriter();
+  const { constructor: TypedArrayDef } = Object.getPrototypeOf(
+    writer.getData()
+  );
+
+  copy.setBitOrder(writer.getBitOrder());
+  copy.setData(new TypedArrayDef(0xff));
+
+  return copy;
+};

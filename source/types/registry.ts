@@ -1,4 +1,4 @@
-import { IType, ITypeStatic } from './itype';
+import { IType, ITypeStatic, ITypeData } from './itype';
 
 export class TypeRegistry {
   private map = new Map<string | Function, ITypeStatic>();
@@ -20,4 +20,30 @@ export class TypeRegistry {
   getTypeFor(key: string | Function): ITypeStatic {
     return this.map.get(key);
   }
+
+  fromObject(data: ITypeData): IType {
+    const definition: ITypeStatic = this.getTypeFor(data.type);
+
+    if (!definition) {
+      throw new Error(`Data type "${data.type}" cannot be found`);
+    }
+
+    return definition.fromObject(data);
+  }
 }
+
+export const defaultTypeRegistry = new TypeRegistry();
+
+export const addTypeDefinition = (type: ITypeStatic) =>
+  defaultTypeRegistry.add(type);
+
+export const addTypeDefinitionFor = (
+  key: string | Function,
+  type: ITypeStatic
+) => defaultTypeRegistry.addTypeFor(key, type);
+
+export const hasTypeDefinitionFor = (key: string | Function): boolean =>
+  defaultTypeRegistry.hasTypeFor(key);
+
+export const getTypeDefinitionFor = (key: string | Function): ITypeStatic =>
+  defaultTypeRegistry.getTypeFor(key);

@@ -16,12 +16,12 @@ export interface ITypeData {
 export interface IType {
   writeTo(writer: IBitWriter, value: any): void;
   readFrom(reader: IBitReader): any;
-  toObject(type: IType): ITypeData;
+  toObject(): ITypeData;
 }
 
 export interface ITypeStatic {
   type: string;
   getTypeKeys(): Array<string | Function>;
-  getInstance():IType;
+  getInstance(...args: any): IType;
   fromObject(data: ITypeData): IType;
 }

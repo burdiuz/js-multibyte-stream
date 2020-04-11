@@ -1,58 +1,62 @@
-import { ITypeStatic } from './IType';
-// to str => (8562541423123344634623144512312n).toString(2)
-// from str => BigInt(`0b${str}`)
-
+import { getBigIntBitCount } from '../utils/getBitCount';
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 
 /*
-static length:
-1 bit -- sign
-1 - 127 bits value
+Currently BigInt is limited to 128 bits, but BigInts could be of any size, 256, 512.
+TODO Make most significant bit to signal about normal or extended mode.
+     normal mode -- 128 bit
+     extended bit -- 1024 bit
 
-variable length:
-1 bit -- sign
-4 bits -- length
-7 - 127 bits -- value
+BigInt is recorded using one's complement.
 */
 export class BigIntType implements IType {
   static readonly type = 'bigint';
-  public signed: boolean;
-  public size: number;
-  public useTwosComplement: boolean = true;
 
-  constructor(signed = true, size = 0) {
-    this.signed = signed;
-    this.size = size;
+  writeTo(writer: IBitWriter, value: bigint): void {
+    const size = getBigIntBitCount(value) + 1;
+    const length = Math.ceil(size / 8 || 1) - 1;
+    const negative = value < 0n;
+
+    writer.write(length, 4);
+
+    if (negative) {
+      value = -value;
+    }
+
+    for (let index = 0; index <= length; index++) {
+      const part = Number((value >> BigInt((length - index) << 3)) & 255n);
+
+      writer.write(!index && negative ? part | (1 << 7) : part, 8);
+    }
   }
 
-  writeTo(writer: IBitWriter, value: number): void {}
+  readFrom(reader: IBitReader): bigint {
+    const length = reader.read(4);
+    let chunk = reader.read(8);
+    let value = BigInt(chunk & 0b1111111);
+    const negative = !!(chunk >> 7);
 
-  readFrom(reader: IBitReader): any {}
+    for (let index = 1; index <= length; index++) {
+      value = (value << 8n) | BigInt(reader.read(8));
+    }
 
-  toObject(type: BigIntType): ITypeData {
-    return {
-      type: BigIntType.type,
-      signed: type.signed,
-      size: this.size,
-      twosComplement: this.useTwosComplement,
-    };
+    return negative ? -value : value;
   }
 
-  static getInstance(signed?: boolean, size?: number): BigIntType {
-    return new BigIntType(signed, size);
+  toObject(): ITypeData {
+    return { type: BigIntType.type };
+  }
+
+  static getInstance(): BigIntType {
+    return new BigIntType();
   }
 
   static getTypeKeys(): Array<string | Function> {
-    return [BigIntType.type, Number, BigIntType];
+    return [BigIntType.type, BigInt, BigIntType];
   }
 
-  static fromObject(data: ITypeData): BigIntType {
-    const { signed = true, size = 0, twosComplement = true } = data;
-    const instance = new BigIntType(signed as boolean, size as number);
-
-    instance.useTwosComplement = twosComplement as boolean;
-
-    return instance;
+  static fromObject(): BigIntType {
+    return new BigIntType();
   }
 }

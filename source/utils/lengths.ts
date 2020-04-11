@@ -1,28 +1,40 @@
 import { getBitCount } from './getBitCount';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 
-export const readShortLength = (reader: IBitReader) => {
-  const length = (reader.read(2) + 1) << 2;
+export const readLength = (
+  reader: IBitReader,
+  blocks: number,
+  multiplierShift: number = 2
+) => {
+  const length = (reader.read(blocks) + 1) << multiplierShift;
 
   return reader.read(length);
 };
 
-export const writeShortLength = (writer: IBitWriter, value: number) => {
-  const length = getBitCount(value) >> 2;
+export const writeLength = (
+  writer: IBitWriter,
+  value: number,
+  blocks: number,
+  multiplierShift: number = 2
+) => {
+  const length = getBitCount(value) >> multiplierShift;
 
-  writer.write(length, 2);
-  writer.write(value, (length + 1) << 2);
+  writer.write(length, blocks);
+  writer.write(value, (length + 1) << multiplierShift);
 };
 
-export const readUintLength = (reader: IBitReader) => {
-  const length = (reader.read(3) + 1) >> 2;
+export const readShortLength = (reader: IBitReader) => readLength(reader, 2);
 
-  return reader.read(length);
-};
+export const writeShortLength = (writer: IBitWriter, value: number) =>
+  writeLength(writer, value, 2);
 
-export const writeUIntLength = (writer: IBitWriter, value: number) => {
-  const length = getBitCount(value) >> 2;
+export const readUIntLength = (reader: IBitReader) => readLength(reader, 3);
 
-  writer.write(length, 3);
-  writer.write(value, (length + 1) << 2);
-};
+export const writeUIntLength = (writer: IBitWriter, value: number) =>
+  writeLength(writer, value, 3);
+
+export const readBigIntLength = (reader: IBitReader) =>
+  readLength(reader, 3, 4);
+
+export const writeBigIntLength = (writer: IBitWriter, value: number) =>
+  writeLength(writer, value, 3, 4);

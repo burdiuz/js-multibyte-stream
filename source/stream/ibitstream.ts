@@ -17,11 +17,12 @@ export interface IBaseBitRW {
   getFrameSize(): number;
 }
 
-export interface IBitWriter {
+export interface IBitWriter extends IBaseBitRW {
   write(value: number, bitCount: number): void;
+  writeData(value: TypedArray, bitStart?:number, bitCount?: number): void;
 }
 
-export interface IBitReader {
+export interface IBitReader extends IBaseBitRW {
   read(bitCount: number): number;
 }
 

@@ -1,4 +1,4 @@
-  import { IType, ITypeData } from './itype';
+import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 
 /*
@@ -6,10 +6,6 @@ import { IBitWriter, IBitReader } from '../stream/ibitstream';
 */
 export class BoolType implements IType {
   static readonly type = 'bool';
-
-  getTypeKeys(): Array<string | Function> {
-    return [BoolType.type, Boolean, BoolType];
-  }
 
   writeTo(writer: IBitWriter, value: boolean): void {
     writer.write(value ? 1 : 0, 1);
@@ -20,6 +16,14 @@ export class BoolType implements IType {
 
   toObject(): ITypeData {
     return { type: BoolType.type };
+  }
+
+  static getTypeKeys(): Array<string | Function> {
+    return [BoolType.type, Boolean, BoolType];
+  }
+
+  static getInstance(): IType {
+    return new BoolType();
   }
 
   static fromObject(): BoolType {
