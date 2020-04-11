@@ -4,7 +4,7 @@ export * from './stream/bitwriter';
 export * from './types/index';
 export * from './schema/schema';
 
-//*
+/*
 import { BitStream } from './stream/bitstream';
 import { IntType } from './types/int';
 import { ObjectType } from './types/object';
@@ -16,7 +16,7 @@ import { readSchemaFrom, Schema } from './schema/schema';
 
 /*
  ======= debug
-//*/
+//* /
 declare const window: any;
 
 window.exports = {};
