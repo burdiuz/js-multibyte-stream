@@ -1,5 +1,5 @@
-import { IType } from './../types/itype';
-import { defaultTypeRegistry } from './../types/registry';
+import { IType } from '../types/itype';
+import { defaultTypeRegistry } from '../types/registry';
 
 export const readObjectFieldTypes = (
   data: { [key: string]: any },

@@ -1,9 +1,9 @@
-import { readObjectFieldTypes } from '../schema/readschema';
+import { readObjectFieldTypes } from '../schema/readobjectfieldtypes';
 import { TypeRegistry, defaultTypeRegistry } from './registry';
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 
-type Obj = { [key: string]: any };
+export type Obj = { [key: string]: any };
 
 /*
 const stream = new BitStream();

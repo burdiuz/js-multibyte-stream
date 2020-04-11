@@ -1,6 +1,21 @@
 import { IDataSource } from './idatasource';
 import { TypedArray } from '../types';
 
+export const setDataSourceLength = (
+  source: TypedArray,
+  length: number
+): TypedArray => {
+  if (length < source.length) {
+    return source.slice(0, length);
+  }
+
+  const { constructor: ArrayDef } = Object.getPrototypeOf(source);
+  const values = new ArrayDef(length);
+  values.set(source);
+
+  return values;
+};
+
 export class DataSource implements IDataSource {
   protected source: TypedArray;
   protected position: number = 0;
@@ -53,9 +68,7 @@ export class DataSource implements IDataSource {
   }
 
   setLength(length: number) {
-    const values = this.source;
-    this.source = new (values.constructor as any)(length);
-    this.source.set(values);
+    this.source = setDataSourceLength(this.source, length);
   }
 
   getSource() {

@@ -13,6 +13,15 @@ const MASKS = ((index) => {
 })(MASK_MAX_INDEX);
 const getMaskOfLength = (length) => MASKS[length];
 
+const setDataSourceLength = (source, length) => {
+    if (length < source.length) {
+        return source.slice(0, length);
+    }
+    const { constructor: ArrayDef } = Object.getPrototypeOf(source);
+    const values = new ArrayDef(length);
+    values.set(source);
+    return values;
+};
 class DataSource {
     constructor(source = new Uint8Array(0xff)) {
         this.position = 0;
@@ -52,9 +61,7 @@ class DataSource {
         return this.source.length;
     }
     setLength(length) {
-        const values = this.source;
-        this.source = new values.constructor(length);
-        this.source.set(values);
+        this.source = setDataSourceLength(this.source, length);
     }
     getSource() {
         return this.source;
@@ -865,9 +872,72 @@ const types = {
     BoolType,
 };
 
+const readSchemaFrom = (value, registry = defaultTypeRegistry) => {
+    const obj = new ObjectType(registry);
+    obj.setSchemaFrom(value);
+    return new Schema(obj);
+};
+class Schema {
+    constructor(obj) {
+        this.type = obj;
+    }
+    loadDataTo(value, target) {
+        const stream = new BitStream(value);
+        const values = this.type.readFrom(stream);
+        return target ? Object.assign(target, values) : values;
+    }
+    saveDataFrom(source) {
+        const stream = new BitStream();
+        this.type.writeTo(stream, source);
+        const data = stream.getData();
+        return setDataSourceLength(data, Math.ceil(stream.getBytePosition() / data.BYTES_PER_ELEMENT));
+    }
+    loadBase64To(str, target) {
+        const data = Uint8Array.from(atob(str)
+            .split('')
+            .map((char) => char.charCodeAt(0)));
+        return this.loadDataTo(data, target);
+    }
+    saveBase64From(source) {
+        const data = this.saveDataFrom(source);
+        return btoa(String.fromCharCode(...data));
+    }
+    toObject() {
+        return this.type.toObject();
+    }
+    static fromObject(data, registry = defaultTypeRegistry) {
+        return new Schema(ObjectType.fromObject(data, registry));
+    }
+}
+
+window.exports = {};
+window.stream = new BitStream();
+window.int = new IntType();
+window.bool = new BoolType();
+window.obj = new ObjectType();
+window.arr = new ArrayType();
+window.big = new BigIntType();
+window.str = new StringType();
+const data = {
+    bool: false,
+    num: 777,
+    big: 555555555555555555555555555555555n,
+    arr: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
+    obj: {
+        one: true,
+        two: false,
+        three: true,
+        num: 8765,
+    },
+};
+const schema = readSchemaFrom(data);
+console.log(schema.saveBase64From(data));
+//*/
+
 exports.BitReader = BitReader;
 exports.BitStream = BitStream;
 exports.BitWriter = BitWriter;
+exports.Schema = Schema;
 exports.TypeRegistry = TypeRegistry;
 exports.addTypeDefinition = addTypeDefinition;
 exports.addTypeDefinitionFor = addTypeDefinitionFor;
@@ -876,4 +946,5 @@ exports.createWritableSource = createWritableSource;
 exports.defaultTypeRegistry = defaultTypeRegistry;
 exports.getTypeDefinitionFor = getTypeDefinitionFor;
 exports.hasTypeDefinitionFor = hasTypeDefinitionFor;
+exports.readSchemaFrom = readSchemaFrom;
 exports.types = types;
