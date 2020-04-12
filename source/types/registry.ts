@@ -34,8 +34,8 @@ export class TypeRegistry {
 
 export const defaultTypeRegistry = new TypeRegistry();
 
-export const addTypeDefinition = (type: ITypeStatic) =>
-  defaultTypeRegistry.add(type);
+export const addTypeDefinition = (...types: ITypeStatic[]) =>
+  types.map((type) => defaultTypeRegistry.add(type));
 
 export const addTypeDefinitionFor = (
   key: string | Function,

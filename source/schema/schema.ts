@@ -12,6 +12,24 @@ export const readSchemaFrom = (value: Obj, registry = defaultTypeRegistry) => {
   return new Schema(obj);
 };
 
+/*
+const data = {
+  bool: false,
+  num: 777,
+  big: 555555555555555555555555555555555n,
+  arr: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
+  obj: {
+    one: true,
+    two: false,
+    three: true,
+    num: 8765,
+  },
+};
+
+const schema: Schema = readSchemaFrom(data);
+console.log(schema.saveBase64From(data));
+console.log(schema.toObject());
+*/
 export class Schema {
   private type: ObjectType;
 

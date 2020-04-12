@@ -1,6 +1,14 @@
 import { BigIntType } from './bigint';
 import { StringType } from './string';
-import { IntType } from './int';
+import {
+  IntType,
+  ShortType,
+  ByteType,
+  UIntType,
+  UShortType,
+  UByteType,
+} from './int';
+import { SimpleFloatType } from './simplefloattype';
 import { ObjectType } from './object';
 import { ArrayType } from './array';
 import { BoolType } from './bool';
@@ -8,7 +16,15 @@ export * from './registry';
 import { addTypeDefinition } from './registry';
 
 addTypeDefinition(BoolType);
-addTypeDefinition(IntType);
+addTypeDefinition(
+  IntType,
+  ShortType,
+  ByteType,
+  UIntType,
+  UShortType,
+  UByteType
+);
+addTypeDefinition(SimpleFloatType);
 addTypeDefinition(BigIntType);
 addTypeDefinition(StringType);
 addTypeDefinition(ObjectType);
@@ -18,6 +34,12 @@ export const types = {
   BigIntType,
   StringType,
   IntType,
+  ShortType,
+  ByteType,
+  UIntType,
+  UShortType,
+  UByteType,
+  SimpleFloatType,
   ObjectType,
   ArrayType,
   BoolType,

@@ -640,6 +640,129 @@ class IntType {
     }
 }
 IntType.type = 'int';
+class ShortType extends IntType {
+    constructor() {
+        super(true, 16);
+    }
+    toObject() {
+        return { type: ShortType.type };
+    }
+    static getInstance() {
+        return new ShortType();
+    }
+    static getTypeKeys() {
+        return [ShortType.type, ShortType];
+    }
+    static fromObject() {
+        return new ShortType();
+    }
+}
+ShortType.type = 'short';
+class ByteType extends IntType {
+    constructor() {
+        super(true, 8);
+    }
+    toObject() {
+        return { type: ByteType.type };
+    }
+    static getInstance() {
+        return new ByteType();
+    }
+    static getTypeKeys() {
+        return [ByteType.type, ByteType];
+    }
+    static fromObject() {
+        return new ByteType();
+    }
+}
+ByteType.type = 'byte';
+class UIntType extends IntType {
+    constructor(size = 0) {
+        super(false, size);
+    }
+    toObject() {
+        return { type: UIntType.type };
+    }
+    static getInstance(size) {
+        return new UIntType(size);
+    }
+    static getTypeKeys() {
+        return [UIntType.type, UIntType];
+    }
+    static fromObject(data) {
+        const { size = 0 } = data;
+        const instance = new UIntType(size);
+        return instance;
+    }
+}
+UIntType.type = 'uint';
+class UShortType extends IntType {
+    constructor() {
+        super(false, 16);
+    }
+    toObject() {
+        return { type: UShortType.type };
+    }
+    static getInstance() {
+        return new UShortType();
+    }
+    static getTypeKeys() {
+        return [UShortType.type, UShortType];
+    }
+    static fromObject(data) {
+        return new UShortType();
+    }
+}
+UShortType.type = 'ushort';
+class UByteType extends IntType {
+    constructor() {
+        super(false, 8);
+    }
+    toObject() {
+        return { type: UByteType.type };
+    }
+    static getInstance() {
+        return new UByteType();
+    }
+    static getTypeKeys() {
+        return [UByteType.type, UByteType];
+    }
+    static fromObject() {
+        return new UByteType();
+    }
+}
+UByteType.type = 'ubyte';
+
+class SimpleFloatType extends IntType {
+    constructor(signed = true, fractionDigits = 3, size = 0) {
+        super(signed, size);
+        this.fractionDigits = fractionDigits;
+        this.multiplier = Math.pow(10, this.fractionDigits);
+    }
+    writeTo(writer, value) {
+        super.writeTo(writer, (value * this.multiplier) | 0);
+    }
+    readFrom(reader) {
+        const value = super.readFrom(reader);
+        return value / this.multiplier;
+    }
+    toObject() {
+        const { signed, fractionDigits, size } = this;
+        return { type: SimpleFloatType.type, signed, fractionDigits, size };
+    }
+    static getInstance(signed, fractionDigits, size) {
+        return new SimpleFloatType(signed, fractionDigits, size);
+    }
+    static getTypeKeys() {
+        return [SimpleFloatType.type, SimpleFloatType];
+    }
+    static fromObject(data) {
+        const { signed, fractionDigits, size } = data;
+        const instance = new SimpleFloatType(signed, fractionDigits, size);
+        return instance;
+    }
+}
+SimpleFloatType.type = 'sfloat';
 
 class TypeRegistry {
     constructor() {
@@ -667,7 +790,7 @@ class TypeRegistry {
     }
 }
 const defaultTypeRegistry = new TypeRegistry();
-const addTypeDefinition = (type) => defaultTypeRegistry.add(type);
+const addTypeDefinition = (...types) => types.map((type) => defaultTypeRegistry.add(type));
 const addTypeDefinitionFor = (key, type) => defaultTypeRegistry.addTypeFor(key, type);
 const hasTypeDefinitionFor = (key) => defaultTypeRegistry.hasTypeFor(key);
 const getTypeDefinitionFor = (key) => defaultTypeRegistry.getTypeFor(key);
@@ -858,7 +981,8 @@ class BoolType {
 BoolType.type = 'bool';
 
 addTypeDefinition(BoolType);
-addTypeDefinition(IntType);
+addTypeDefinition(IntType, ShortType, ByteType, UIntType, UShortType, UByteType);
+addTypeDefinition(SimpleFloatType);
 addTypeDefinition(BigIntType);
 addTypeDefinition(StringType);
 addTypeDefinition(ObjectType);
@@ -867,6 +991,12 @@ const types = {
     BigIntType,
     StringType,
     IntType,
+    ShortType,
+    ByteType,
+    UIntType,
+    UShortType,
+    UByteType,
+    SimpleFloatType,
     ObjectType,
     ArrayType,
     BoolType,
@@ -877,6 +1007,24 @@ const readSchemaFrom = (value, registry = defaultTypeRegistry) => {
     obj.setSchemaFrom(value);
     return new Schema(obj);
 };
+/*
+const data = {
+  bool: false,
+  num: 777,
+  big: 555555555555555555555555555555555n,
+  arr: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
+  obj: {
+    one: true,
+    two: false,
+    three: true,
+    num: 8765,
+  },
+};
+
+const schema: Schema = readSchemaFrom(data);
+console.log(schema.saveBase64From(data));
+console.log(schema.toObject());
+*/
 class Schema {
     constructor(obj) {
         this.type = obj;
@@ -909,6 +1057,20 @@ class Schema {
         return new Schema(ObjectType.fromObject(data, registry));
     }
 }
+
+window.exports = {};
+window.stream = new BitStream();
+window.int = new IntType();
+window.sfloat = new SimpleFloatType();
+window.bool = new BoolType();
+window.obj = new ObjectType();
+window.arr = new ArrayType();
+window.big = new BigIntType();
+window.str = new StringType();
+window.sfloat.writeTo(window.stream, 123.456);
+window.stream.setPosition(0);
+console.log(window.sfloat.readFrom(window.stream));
+//*/
 
 exports.BitReader = BitReader;
 exports.BitStream = BitStream;

@@ -1,4 +1,4 @@
-import { getBitCount } from './../utils/getBitCount';
+import { getBitCount } from '../utils/getBitCount';
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 import {
@@ -82,10 +82,10 @@ variable length:
 7 - 31 bits -- value
 */
 export class IntType implements IType {
-  static readonly type = 'int';
-  public signed: boolean;
-  public size: number;
-  public useTwosComplement: boolean = true;
+  static readonly type: string = 'int';
+  protected signed: boolean;
+  protected size: number;
+  protected useTwosComplement: boolean = true;
 
   constructor(signed = true, size = 0) {
     this.signed = signed;
@@ -137,6 +137,11 @@ export class IntType implements IType {
     };
   }
 
+  /*
+    Somehow static type inheritance exists in TypeScript, so I have to add this
+    signature overload to use normal static method naming in derived classes
+  */
+  static getInstance(...args: any[]): IType;
   static getInstance(signed?: boolean, size?: number): IType {
     return new IntType(signed, size);
   }
@@ -152,5 +157,128 @@ export class IntType implements IType {
     instance.useTwosComplement = twosComplement as boolean;
 
     return instance;
+  }
+}
+
+export class ShortType extends IntType {
+  static readonly type = 'short';
+
+  constructor() {
+    super(true, 16);
+  }
+
+  toObject(): ITypeData {
+    return { type: ShortType.type };
+  }
+
+  static getInstance(): IType {
+    return new ShortType();
+  }
+
+  static getTypeKeys(): Array<string | Function> {
+    return [ShortType.type, ShortType];
+  }
+
+  static fromObject(): ShortType {
+    return new ShortType();
+  }
+}
+
+export class ByteType extends IntType {
+  static readonly type = 'byte';
+
+  constructor() {
+    super(true, 8);
+  }
+
+  toObject(): ITypeData {
+    return { type: ByteType.type };
+  }
+
+  static getInstance(): IType {
+    return new ByteType();
+  }
+
+  static getTypeKeys(): Array<string | Function> {
+    return [ByteType.type, ByteType];
+  }
+
+  static fromObject(): ByteType {
+    return new ByteType();
+  }
+}
+
+export class UIntType extends IntType {
+  static readonly type = 'uint';
+
+  constructor(size = 0) {
+    super(false, size);
+  }
+
+  toObject(): ITypeData {
+    return { type: UIntType.type };
+  }
+
+  static getInstance(size?: number): IType {
+    return new UIntType(size);
+  }
+
+  static getTypeKeys(): Array<string | Function> {
+    return [UIntType.type, UIntType];
+  }
+
+  static fromObject(data: ITypeData): UIntType {
+    const { size = 0 } = data;
+    const instance = new UIntType(size as number);
+
+    return instance;
+  }
+}
+
+export class UShortType extends IntType {
+  static readonly type = 'ushort';
+
+  constructor() {
+    super(false, 16);
+  }
+
+  toObject(): ITypeData {
+    return { type: UShortType.type };
+  }
+
+  static getInstance(): IType {
+    return new UShortType();
+  }
+
+  static getTypeKeys(): Array<string | Function> {
+    return [UShortType.type, UShortType];
+  }
+
+  static fromObject(data: ITypeData): UShortType {
+    return new UShortType();
+  }
+}
+
+export class UByteType extends IntType {
+  static readonly type = 'ubyte';
+
+  constructor() {
+    super(false, 8);
+  }
+
+  toObject(): ITypeData {
+    return { type: UByteType.type };
+  }
+
+  static getInstance(): IType {
+    return new UByteType();
+  }
+
+  static getTypeKeys(): Array<string | Function> {
+    return [UByteType.type, UByteType];
+  }
+
+  static fromObject(): UByteType {
+    return new UByteType();
   }
 }

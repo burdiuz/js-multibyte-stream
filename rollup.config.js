@@ -2,9 +2,16 @@ import typescript from '@rollup/plugin-typescript';
 
 export default {
   input: 'source/index.ts',
-  output: {
-    dir: 'output',
-    format: 'cjs'
-  },
-  plugins: [typescript()]
+  output: [
+    {
+      file: 'index.js',
+      format: 'cjs',
+    },
+    {
+      name: 'MultibyteStream',
+      file: 'dist/multibyte-stream.umd.js',
+      format: 'umd',
+    },
+  ],
+  plugins: [typescript()],
 };
