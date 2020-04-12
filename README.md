@@ -1,4 +1,5 @@
 # @actualwave/multibyte-stream
+This library allows to write and read data between bytes. It allows to store booleans using single bit ot store integers using less than a byte and so on.
 
 ## Motivation
 I wanted smallest format I could have to store or pass data. This allows to store much more data is places like URL in form of Base64-encoded string. Like `QoCCBhCCkGIOQghIDRtkGNDAbjv5pFrjjjjjIwlkR7g=` string contains an object with numbers, booleans, array and nested object, and it could be stored in URL `htts://mydomain.com/?QoCCBhCCkGIOQghIDRtkGNDAbjv5pFrjjjjjIwlkR7g=`. This allows to persist more insignificant data on client's side without the need to save it on server.
@@ -36,15 +37,15 @@ Simplest way to use this package is to directly create BitStream to read or writ
 const stream = new BitStream();
 
 // write data
-stream.write(15, 4);
-stream.write(100, 8);
+stream.write(15, 4); // record value 15 using 4 bits
+stream.write(100, 8); // record value 100 using 8 bits
 
 // reset position
 stream.setPosition(0);
 
 // read data
-console.log(stream.read(4)); // 15
-console.log(stream.read(8)); // 100
+console.log(stream.read(4)); // read 4 bits value, returns 15
+console.log(stream.read(8)); // read 8 bits value, returns 100
 ```
 
 BitStream allows to write only unsigned integer values.
