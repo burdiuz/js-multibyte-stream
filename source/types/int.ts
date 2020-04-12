@@ -19,6 +19,7 @@ const writeInteger = (
 ): void => {
   if (!signed) {
     writer.write(value < 0 ? -value : value, size);
+    return;
   }
 
   writer.write(

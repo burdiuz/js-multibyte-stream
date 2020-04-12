@@ -15,7 +15,7 @@ import { StringType } from './types/string';
 import { BigIntType } from './types/bigint';
 import { readSchemaFrom, Schema } from './schema/schema';
 
-//*
+/*
  ======= debug
 //* /
 declare const window: any;
@@ -30,7 +30,34 @@ window.arr = new ArrayType();
 window.big = new BigIntType();
 window.str = new StringType();
 
+/*
 window.sfloat.writeTo(window.stream, 123.456);
 window.stream.setPosition(0);
 console.log(window.sfloat.readFrom(window.stream));
-//*/
+//* /
+
+const X = 1;
+const _ = 0;
+const config = {
+  frames: [
+    [
+      [_, X, _, X, _, X],
+      [X, _, X, _, X, _],
+    ],
+    [
+      [X, _, X, _, X, _],
+      [_, X, _, X, _, X],
+    ],
+  ],
+};
+
+const schema = new Schema(
+  ObjectType.getInstance({
+    frames: new ArrayType(new ArrayType(new ArrayType(new IntType(false, 1)))),
+  })
+);
+
+const data = schema.saveBase64From(config);
+console.log(data);
+console.log(schema.loadBase64To(data));
+*/

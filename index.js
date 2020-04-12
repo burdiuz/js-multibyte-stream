@@ -566,6 +566,7 @@ const fromOnesComplementRepresentation = (value, length) => {
 const writeInteger = (writer, value, size, signed, twosc) => {
     if (!signed) {
         writer.write(value < 0 ? -value : value, size);
+        return;
     }
     writer.write((twosc ? toTwosComplementRepresentation : toOnesComplementRepresentation)(value, size), size);
 };
@@ -878,10 +879,17 @@ class ObjectType {
         });
         return { type: ObjectType.type, fields };
     }
-    static getInstance(obj, registry = defaultTypeRegistry) {
+    static getInstanceFrom(obj, registry = defaultTypeRegistry) {
         const type = new ObjectType(registry);
         if (obj) {
             type.setSchemaFrom(obj);
+        }
+        return type;
+    }
+    static getInstance(schema, registry = defaultTypeRegistry) {
+        const type = new ObjectType(registry);
+        if (schema) {
+            type.setSchema(schema);
         }
         return type;
     }
@@ -1057,20 +1065,6 @@ class Schema {
         return new Schema(ObjectType.fromObject(data, registry));
     }
 }
-
-window.exports = {};
-window.stream = new BitStream();
-window.int = new IntType();
-window.sfloat = new SimpleFloatType();
-window.bool = new BoolType();
-window.obj = new ObjectType();
-window.arr = new ArrayType();
-window.big = new BigIntType();
-window.str = new StringType();
-window.sfloat.writeTo(window.stream, 123.456);
-window.stream.setPosition(0);
-console.log(window.sfloat.readFrom(window.stream));
-//*/
 
 exports.BitReader = BitReader;
 exports.BitStream = BitStream;
