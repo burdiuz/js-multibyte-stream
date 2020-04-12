@@ -1,7 +1,7 @@
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 import { copyWriterConfig } from '../stream/bitwriter';
-import { writeUIntLength, readUIntLength } from '../utils/lengths';
+import { writeShortLength, readShortLength } from '../utils/lengths';
 
 /*
 Ideas for other string writing implementations
@@ -32,15 +32,13 @@ cycle:
 */
 
 /*
-  Ordinary UTF-8 String
-  3 bits -- string length
-  0 ... bytes -- UTF-8 string
+  Saves characters as sequence of 7 bit values. most significant bit, when set,
+  tells that new character starts.
 */
 export class StringType implements IType {
   static readonly type = 'string';
 
   writeTo(writer: IBitWriter, value: string): void {
-    const newChar = 1 << 7;
     const chars = copyWriterConfig(writer);
     const { length } = value;
 
@@ -51,35 +49,37 @@ export class StringType implements IType {
       while (char) {
         const part = char & 0b1111111;
 
-        chars.write(first ? newChar | part : part, 8);
+        chars.write(first ? 0b10000000 | part : part, 8);
 
         char = char >> 7;
         first = false;
       }
     }
 
-    const dataLength = chars.getPosition();
-
-    writeUIntLength(writer, dataLength);
-    writer.writeData(chars.getData(), dataLength);
+    writeShortLength(writer, chars.getBytePosition());
+    writer.writeData(chars.getData(), 0, chars.getPosition());
   }
 
   readFrom(reader: IBitReader): string {
     let value = '';
     let charCode = 20;
+    let partCount = 0;
 
-    const bitLength = readUIntLength(reader);
+    let length = readShortLength(reader);
 
-    while (reader.getPosition() < bitLength) {
+    while (length) {
       const part = reader.read(8);
-      const newChar = !!(part >> 7);
 
-      if (newChar) {
+      if (part >> 7 === 1) {
         value = `${value}${String.fromCharCode(charCode)}`;
-        charCode = 0;
+        charCode = part & 0b1111111;
+        partCount = 1;
       } else {
-        charCode = (charCode << 7) | (part & 0b1111111);
+        charCode = ((part & 0b1111111) << (7 * partCount)) | charCode;
+        partCount++;
       }
+
+      length--;
     }
 
     // add last read char code and remove first space

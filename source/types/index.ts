@@ -12,6 +12,7 @@ import { SimpleFloatType } from './simplefloattype';
 import { ObjectType } from './object';
 import { ArrayType } from './array';
 import { BoolType } from './bool';
+import { EnumType } from './enum';
 export * from './registry';
 import { addTypeDefinition } from './registry';
 
@@ -40,6 +41,7 @@ export const types = {
   UShortType,
   UByteType,
   SimpleFloatType,
+  EnumType,
   ObjectType,
   ArrayType,
   BoolType,

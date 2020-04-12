@@ -2,7 +2,91 @@
 This library allows to write and read data between bytes. It allows to store booleans using single bit ot store integers using less than a byte and so on.
 
 ## Motivation
-I wanted smallest format I could have to store or pass data. This allows to store much more data is places like URL in form of Base64-encoded string. Like `QoCCBhCCkGIOQghIDRtkGNDAbjv5pFrjjjjjIwlkR7g=` string contains an object with numbers, booleans, array and nested object, and it could be stored in URL `htts://mydomain.com/?QoCCBhCCkGIOQghIDRtkGNDAbjv5pFrjjjjjIwlkR7g=`. This allows to persist more insignificant data on client's side without the need to save it on server.
+I wanted smallest format I could have to store or pass data. This allows to store much more data is places like URL in form of Base64-encoded string. Like `DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA` string contains an object with numbers, booleans, array and nested object, and it could be stored in URL `htts://mydomain.com/?DBQSEruPv7WFY2VAYKQ%2BysKDB7vn06Onu56DT9K4gnJw%2BXWA`.
+```javascript
+// config data to save
+const config = {
+  fields: ['name', 'address', 'email'],
+  sortBy: {
+    field: 'address',
+    order: 'asc',
+  },
+  filterBy: [
+    { field: 'email', value: '.com' },
+    { field: 'date', value: '12' },
+  ],
+  page: 40,
+  query: '20 Anything St.',
+  panels: ['top-bar', 'bottom-bar', 'side-bar'],
+  theme: 'dark',
+};
+
+// prepare enumerations
+const fieldType = EnumType.getInstance(['name', 'address', 'email', 'date']);
+const orderType = EnumType.getInstance(['asc', 'desc']);
+const panelType = EnumType.getInstance(['top-bar', 'bottom-bar', 'side-bar']);
+
+// create config schema
+const configType = ObjectType.getInstance({
+  fields: ArrayType.getInstance(fieldType),
+  sortBy: ObjectType.getInstance({
+    field: fieldType,
+    order: orderType,
+  }),
+  filterBy: ArrayType.getInstance(
+    ObjectType.getInstance({
+      field: fieldType,
+      value: StringType.getInstance(),
+    })
+  ),
+  page: IntType.getInstance(false, 6),
+  query: StringType.getInstance(),
+  panels: ArrayType.getInstance(panelType),
+  theme: StringType.getInstance(),
+});
+
+const schema = new Schema(configType);
+
+// save config values into Base64 string
+const values = schema.saveBase64From(config);
+console.log(values); // DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA
+```
+This allows to persist more insignificant data on client's side without the need to save it on server. Such Base64 string could then be loaded using same schema.
+```javascript
+const loadedConfig = schema.loadBase64To('DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA');
+console.log(loadedConfig);
+/*
+{
+  "fields": [
+    "name",
+    "address",
+    "email"
+  ],
+  "filterBy": [
+    {
+      "field": "email",
+      "value": ".com"
+    },
+    {
+      "field": "date",
+      "value": "12"
+    }
+  ],
+  "page": 40,
+  "panels": [
+    "top-bar",
+    "bottom-bar",
+    "side-bar"
+  ],
+  "query": "20 Anything St.",
+  "sortBy": {
+    "field": "address",
+    "order": "asc"
+  },
+  "theme": "dark"
+}
+*/
+```
 
 It may also help to communicate with server or any other party. For example, some years ago communication between client and server looked like
 ```
@@ -24,7 +108,7 @@ These days communication is usually stricter and reads like
 - response has more fields than we expected, failure
 - everything received exactly as expected, finally, we may proceed
 ```
-All parties that work with data know it's structure and field types, so why to pass it? Let's just communicate values and apply them to structures we already know. This means structures must be equal across all parties who works with data, but usually it is already like that.
+All parties that work with data know it's structure and field types, so why to pass it? Let's just communicate values and apply them to structures we already know. This means structures must be equal across all parties that work with data, but usually it is already like that.
 
 ## Usage
 There are multiple ways how this package could be used -- via BitStream, Data Types or Schema.
@@ -101,6 +185,7 @@ Data Types are classes that help to read and write data of specific types. Curre
  - ObjectType records values of object fields to stream. It should be provided with object schema or can read object schema from populated object(properties with default values to read data types from them).
  - ArrayType uses any other type for array elements and records it's content to stream. It works with arrays that contain elements of same type, values of other types will lead to unexpected results.
  - BigIntType works with [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) values of length up to 128 bits.
+ - EnumType should be provided with list of possible values, saves index of the value to stream.
 
 > IntType with variable size uses first 3 bits to specify how many of 4-bit chunks used to record value.
 
@@ -185,3 +270,28 @@ To see or save schema use toObject() method and `console.log(schema.toObject());
   }
 }
 ```
+
+const X = 1;
+const _ = 0;
+const config = {
+  frames: [
+    [
+      [_, X, _, X, _, X],
+      [X, _, X, _, X, _],
+    ],
+    [
+      [X, _, X, _, X, _],
+      [_, X, _, X, _, X],
+    ],
+  ],
+};
+
+const schema = new Schema(
+  ObjectType.getInstance({
+    frames: new ArrayType(new ArrayType(new ArrayType(new IntType(false, 1)))),
+  })
+);
+
+const data = schema.saveBase64From(config);
+console.log(data);
+console.log(schema.loadBase64To(data));

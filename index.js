@@ -70,9 +70,10 @@ class DataSource {
         let str = '';
         for (let index = 0; index < length; index++) {
             const item = this.source[index] >>> 0;
-            str = `${str} ${item.toString(2).padStart(this.getFrameSize(), '0')}`;
+            const frame = item.toString(2).padStart(this.getFrameSize(), '0');
+            str = `${str} ${frame}`;
         }
-        return str;
+        return str.trim();
     }
 }
 class DynamicDataSource extends DataSource {
@@ -323,8 +324,8 @@ class BitStream {
         this.writer.write(value, bitCount);
         this.reader.setPosition(this.writer.getPosition());
     }
-    writeData(value, bitCount) {
-        this.writer.writeData(value, bitCount);
+    writeData(value, bitStart, bitCount) {
+        this.writer.writeData(value, bitStart, bitCount);
         this.reader.setPosition(this.writer.getPosition());
     }
     read(bitCount) {
@@ -421,8 +422,6 @@ const writeLength = (writer, value, blocks, multiplierShift = 2) => {
 };
 const readShortLength = (reader) => readLength(reader, 2);
 const writeShortLength = (writer, value) => writeLength(writer, value, 2);
-const readUIntLength = (reader) => readLength(reader, 3);
-const writeUIntLength = (writer, value) => writeLength(writer, value, 3);
 
 /*
 Ideas for other string writing implementations
@@ -452,13 +451,11 @@ cycle:
   4 - 16 bits -- length of the group
 */
 /*
-  Ordinary UTF-8 String
-  3 bits -- string length
-  0 ... bytes -- UTF-8 string
+  Saves characters as sequence of 7 bit values. most significant bit, when set,
+  tells that new character starts.
 */
 class StringType {
     writeTo(writer, value) {
-        const newChar = 1 << 7;
         const chars = copyWriterConfig(writer);
         const { length } = value;
         for (let index = 0; index < length; index++) {
@@ -466,29 +463,31 @@ class StringType {
             let first = true;
             while (char) {
                 const part = char & 0b1111111;
-                chars.write(first ? newChar | part : part, 8);
+                chars.write(first ? 0b10000000 | part : part, 8);
                 char = char >> 7;
                 first = false;
             }
         }
-        const dataLength = chars.getPosition();
-        writeUIntLength(writer, dataLength);
-        writer.writeData(chars.getData(), dataLength);
+        writeShortLength(writer, chars.getBytePosition());
+        writer.writeData(chars.getData(), 0, chars.getPosition());
     }
     readFrom(reader) {
         let value = '';
         let charCode = 20;
-        const bitLength = readUIntLength(reader);
-        while (reader.getPosition() < bitLength) {
+        let partCount = 0;
+        let length = readShortLength(reader);
+        while (length) {
             const part = reader.read(8);
-            const newChar = !!(part >> 7);
-            if (newChar) {
+            if (part >> 7 === 1) {
                 value = `${value}${String.fromCharCode(charCode)}`;
-                charCode = 0;
+                charCode = part & 0b1111111;
+                partCount = 1;
             }
             else {
-                charCode = (charCode << 7) | (part & 0b1111111);
+                charCode = ((part & 0b1111111) << (7 * partCount)) | charCode;
+                partCount++;
             }
+            length--;
         }
         // add last read char code and remove first space
         value = `${value.substr(1)}${String.fromCharCode(charCode)}`;
@@ -988,6 +987,40 @@ class BoolType {
 }
 BoolType.type = 'bool';
 
+/*
+ Enumeration type receives an array of values and saves to stream an index of the value.
+ To properly read/write values to stream, array must be the same at all times.
+*/
+class EnumType {
+    constructor(values = []) {
+        this.values = values;
+        this.size = getBitCount(this.values.length);
+    }
+    writeTo(writer, value) {
+        const index = this.values.findIndex((item) => item === value);
+        if (index < 0) {
+            throw new Error(`Value "${value}" is not part of enumeration.`);
+        }
+        writer.write(index, this.size);
+    }
+    readFrom(reader) {
+        return this.values[reader.read(this.size)];
+    }
+    toObject() {
+        return { type: EnumType.type, values: this.values };
+    }
+    static getTypeKeys() {
+        return [EnumType.type, EnumType];
+    }
+    static getInstance(values) {
+        return new EnumType(values);
+    }
+    static fromObject({ values }) {
+        return new EnumType(values);
+    }
+}
+EnumType.type = 'enum';
+
 addTypeDefinition(BoolType);
 addTypeDefinition(IntType, ShortType, ByteType, UIntType, UShortType, UByteType);
 addTypeDefinition(SimpleFloatType);
@@ -1005,6 +1038,7 @@ const types = {
     UShortType,
     UByteType,
     SimpleFloatType,
+    EnumType,
     ObjectType,
     ArrayType,
     BoolType,

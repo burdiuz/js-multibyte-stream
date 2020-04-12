@@ -80,11 +80,12 @@ export class DataSource implements IDataSource {
 
     for (let index = 0; index < length; index++) {
       const item = this.source[index] >>> 0;
+      const frame = item.toString(2).padStart(this.getFrameSize(), '0');
 
-      str = `${str} ${item.toString(2).padStart(this.getFrameSize(), '0')}`;
+      str = `${str} ${frame}`;
     }
 
-    return str;
+    return str.trim();
   }
 }
 

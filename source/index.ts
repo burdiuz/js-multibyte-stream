@@ -14,6 +14,7 @@ import { BoolType } from './types/bool';
 import { StringType } from './types/string';
 import { BigIntType } from './types/bigint';
 import { readSchemaFrom, Schema } from './schema/schema';
+import { EnumType } from './types/enum';
 
 /*
  ======= debug
@@ -26,6 +27,7 @@ window.int = new IntType();
 window.sfloat = new SimpleFloatType();
 window.bool = new BoolType();
 window.obj = new ObjectType();
+window.enum = new EnumType();
 window.arr = new ArrayType();
 window.big = new BigIntType();
 window.str = new StringType();
