@@ -23,7 +23,7 @@ But if we cut all the structure and leave only values, it should be
 ```
 1234trueHello
 ```
-Now it's shortest, but then, look at it's number and boolean values in binary format
+Now it's shortest, but then, look at it's number and boolean values in binary format(strings are more complicated to compact and usually they keep most of the occupied space).
 ```
 00000100 11010010 -- 1234 takes at least 2 bytes
 00000001 -- true takes at least one byte
@@ -118,7 +118,7 @@ console.log(loadedConfig);
 }
 */
 ```
-> Note that schema must be exactly the same. Since values are stores as a stream it is crucial to provide exactly same schema to be able to restore data.
+> Note that schema must be exactly the same. Since values are stored as a stream it is crucial to provide exactly same schema to be able to restore data.
 
 It may also help to communicate with server or any other party. For example, some years ago communication between client and server looked like
 ```
