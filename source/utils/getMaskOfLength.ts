@@ -1,4 +1,4 @@
-export const MASK_MAX_INDEX = 31;
+export const MASK_MAX_INDEX = 32;
 
 export const MASKS = ((index: number) => {
   const list = [0];

@@ -60,30 +60,31 @@ export class BitWriter extends BaseBitRW implements IBitWriter {
   }
 
   writeData(
-    value: TypedArray,
+    source: TypedArray,
     bitStart: number = 0,
-    bitLength: number = value.length * (value.BYTES_PER_ELEMENT << 3) - bitStart
+    bitLength: number = source.length * (source.BYTES_PER_ELEMENT << 3) -
+      bitStart
   ): void {
-    const frameSize = value.BYTES_PER_ELEMENT << 3;
-    const start = (bitStart / frameSize) | 0;
+    const srcFrameSize = source.BYTES_PER_ELEMENT << 3;
+    const start = (bitStart / srcFrameSize) | 0;
     let leftLength = bitLength;
     let index = start;
 
     while (leftLength > 0) {
-      let size = frameSize;
-      let source = value[index];
+      let size = srcFrameSize;
+      let value = source[index];
 
       if (index === start) {
-        size = frameSize - (bitStart % frameSize);
-        source = source & getMaskOfLength(size);
+        size = srcFrameSize - (bitStart % srcFrameSize);
+        value = value & getMaskOfLength(size);
       }
 
       if (leftLength < size) {
+        value = (value >> (size - leftLength)) & getMaskOfLength(leftLength);
         size = leftLength;
-        source = (source >> (frameSize - size)) & getMaskOfLength(size);
       }
 
-      this.write(source, size);
+      this.write(value, size);
       leftLength -= size;
       index++;
     }

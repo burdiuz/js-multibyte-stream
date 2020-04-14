@@ -14,4 +14,5 @@ export interface IDataSource {
   getLength(): number;
   setLength(length: number): void;
   getSource(): TypedArray;
+  toString(start: number, length: number): string;
 }

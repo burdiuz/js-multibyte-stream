@@ -1,8 +1,8 @@
 # @actualwave/multibyte-stream
-This library allows to write and read data between bytes. It allows to store booleans using single bit ot store integers using less than a byte and so on.
+This library allows to write and read data between bytes. It allows to store booleans using single bit to store integers using less than a byte and so on.
 
 ## Motivation
-I wanted a data format that minifies payload to smallest size, so I could save or transfer more data within a limit. To make such compact data format I decided to cut everything that should not be saved/transferred, so this library only saves the values ignoring anything about data structure and field names.  
+I wanted a data format that minifies payload to smallest size, so I could save or transfer more data within a limit. To make such compact data format I decided to cut everything that should not be saved/transferred, so this library only saves the values ignoring anything about data structure and field names.
 Let's look at this object:
 ```javascript
 const data = {
@@ -210,16 +210,19 @@ reader.read(8); // 100
 
 ### Data Types
 Data Types are classes that help to read and write data of specific types. Currently I've implemented these types
- - BoolType uses one bit to record value.
- - IntType saves real numbers. Can be customized to save number sign, use [two's complement](https://en.wikipedia.org/wiki/Two%27s_complement) for negative numbers and to use variable or specific size. Additionaly provided derived classes to record integers  with specific size -- ShortType, ByteType, UIntType, UShortType, UByteType.
- - SimpleFloatType is derived from InType. It simply multiples float to preserve specified accuracy and transforms into integer. Accuracy could be specified by passing value to constructor, by default it's 3 symbols after comma.
- - StringType writes strings using variable byte length for each character. most significant bit used to determine if new character starts(1) or current continues(0).
- - ObjectType records values of object fields to stream. It should be provided with object schema or can read object schema from populated object(properties with default values to read data types from them).
- - ArrayType uses any other type for array elements and records it's content to stream. It works with arrays that contain elements of same type, values of other types will lead to unexpected results.
- - BigIntType works with [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) values of length up to 128 bits.
- - EnumType should be provided with list of possible values, saves index of the value to stream.
+ - **BoolType** uses one bit to record value.
+ - **IntType** saves real numbers. Can be customized to save number sign, use [two's complement](https://en.wikipedia.org/wiki/Two%27s_complement) for negative numbers and to use variable or specific size. Additionaly provided derived classes to record integers  with specific size -- ShortType, ByteType, UIntType, UShortType, UByteType.
+ - **SimpleFloatType** is derived from InType. It simply multiples float to preserve specified accuracy and transforms into integer. Accuracy could be specified by passing value to constructor, by default it's 3 symbols after comma.
+ - **StringType** writes strings using variable byte length for each character. most significant bit used to determine if new character starts(1) or current continues(0).
+ - **ObjectType** records values of object fields to stream. It should be provided with object schema or can read object schema from populated object(properties with default values to read data types from them).
+ - **ArrayType** uses any other type for array elements and records it's content to stream. It works with arrays that contain elements of same type, values of other types will lead to unexpected results.
+ - **BigIntType** works with [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) values of length up to 128 bits.
+ - **EnumType** should be provided with list of possible values, saves index of the value to stream.
 
-> IntType with variable size uses first 3 bits to specify how many of 4-bit chunks used to record value.
+> IntType with variable size uses first 3 bits to specify how many of 4-bit chunks used to record the actual value.
+
+### Type Registry
+This project contains so-called type registry, it contains all Data Type classes that are used in automatic schema generation via `readSchemaFrom`(or in ObjectType/ArrayType) and in serializing schemas into raw objects and back. Withithn the library all available Data Types are registered using `addTypeDefinition()` function which does all the work.
 
 ### Schema
 Schema object contains ObjectType in it and provides simple API to generate Uint8Array from object properties and back. Also may use [Base64](https://en.wikipedia.org/wiki/Base64)-encoded string.
@@ -302,6 +305,12 @@ To see or save schema use toObject() method and `console.log(schema.toObject());
   }
 }
 ```
+This simple version of schema could be stored elsewhere in JSON and restored back using Schema.fromObject();
+```javascript
+const schema = Schema.fromObject(JSON.parse(jsonEncodedSchema));
+
+schema.loadBase64To(queryData, currentConfig);
+```
 
 Save and load nested arrays of booleans
 ```javascript
@@ -329,4 +338,79 @@ const schema = new Schema(
 const data = schema.saveBase64From(config);
 console.log(data); // CCQZVBqgkGqQZUA=
 console.log(schema.loadBase64To(data));
+```
+
+## Extensions
+To extend this library with new data types or special cases for already existing data types, you have to create new Data Type class and register it using Type Registry.
+```javascript
+import { defaultTypeRegistry, addTypeDefinition } from '@actualwave/multibyte-stream';
+
+/*
+  Create a data type
+*/
+export class MyCustomType implements IType {
+  static readonly type = 'mycustom';
+
+  writeTo(writer: IBitWriter, value: any): void {
+    /*
+      Here you write data to stream in form of unsigned integers
+    */
+  }
+
+  readFrom(reader: IBitReader): any {
+    /*
+      Read unsigned integers andconvert them into your data
+    */
+  }
+
+  toObject(): ITypeData {
+    /*
+      Convert your custom data type into a serializable object
+    */
+
+    return {
+      type: MyCustomType.type,
+    };
+  }
+
+  static getInstance(): IType {
+    return new MyCustomType();
+  }
+
+  static getTypeKeys(): Array<string | Function> {
+    /*
+      Any identifiers which can be used to apply instance of this class to a value
+      Usually these are strings or classes.
+      If you want to bind your custom type to specific object type or base type,
+      pass it here. For example, adding here Number will assign this data type for
+      all numbers.
+
+    */
+    return [MyCustomType.type, MyCustomType];
+  }
+
+  static fromObject(
+    data: ITypeData,
+    registry: TypeRegistry = defaultTypeRegistry
+  ): MyCustomType {
+    /*
+      Convert object to data type instance
+    */
+    return new MyCustomType();
+  }
+}
+
+/*
+Register your data type so it cam be applied in auto-generated custom schemas(for objects, arrays etc.).
+*/
+addTypeDefinition(MyCustomType);
+```
+If you want your data type to be used for custom type of object, just ad dit to the list in `getTypeKeys()`, this works for simple JS types.
+```javascript
+  static getTypeKeys(): Array<string | Function> {
+    /*
+      I want to make custom date objects, built-in Date and moment objects to be serializable
+    */
+    return [MyCustomType.type, CustomDateObject, Date, moment, MyCustomType];
+  }
 ```

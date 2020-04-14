@@ -1,10 +1,9 @@
 export const reverseBitOrder = (value: number, length: number): number => {
-  let pos = length - 1;
+  let pos = 0;
   let result = 0;
 
-  while (pos >= 0) {
-    result = (result << 1) | (value >> pos);
-    pos--;
+  while (pos < length) {
+    result = ((result << 1) | ((value >> pos++) & 1)) >>> 0;
   }
 
   return result;
