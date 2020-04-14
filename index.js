@@ -2,7 +2,7 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-const MASK_MAX_INDEX = 31;
+const MASK_MAX_INDEX = 32;
 const MASKS = ((index) => {
     const list = [0];
     while (index > 0) {
@@ -141,11 +141,10 @@ class BaseBitRW {
 }
 
 const reverseBitOrder = (value, length) => {
-    let pos = length - 1;
+    let pos = 0;
     let result = 0;
-    while (pos >= 0) {
-        result = (result << 1) | (value >> pos);
-        pos--;
+    while (pos < length) {
+        result = ((result << 1) | ((value >> pos++) & 1)) >>> 0;
     }
     return result;
 };
@@ -238,23 +237,24 @@ class BitWriter extends BaseBitRW {
         }
         this.framePosition = frameSize - leftSpace;
     }
-    writeData(value, bitStart = 0, bitLength = value.length * (value.BYTES_PER_ELEMENT << 3) - bitStart) {
-        const frameSize = value.BYTES_PER_ELEMENT << 3;
-        const start = (bitStart / frameSize) | 0;
+    writeData(source, bitStart = 0, bitLength = source.length * (source.BYTES_PER_ELEMENT << 3) -
+        bitStart) {
+        const srcFrameSize = source.BYTES_PER_ELEMENT << 3;
+        const start = (bitStart / srcFrameSize) | 0;
         let leftLength = bitLength;
         let index = start;
         while (leftLength > 0) {
-            let size = frameSize;
-            let source = value[index];
+            let size = srcFrameSize;
+            let value = source[index];
             if (index === start) {
-                size = frameSize - (bitStart % frameSize);
-                source = source & getMaskOfLength(size);
+                size = srcFrameSize - (bitStart % srcFrameSize);
+                value = value & getMaskOfLength(size);
             }
             if (leftLength < size) {
+                value = (value >> (size - leftLength)) & getMaskOfLength(leftLength);
                 size = leftLength;
-                source = (source >> (frameSize - size)) & getMaskOfLength(size);
             }
-            this.write(source, size);
+            this.write(value, size);
             leftLength -= size;
             index++;
         }
