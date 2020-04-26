@@ -9,6 +9,7 @@ import {
   toOnesComplementRepresentation,
   fromOnesComplementRepresentation,
 } from '../utils/onesComplement';
+import { TypeRegistry, defaultTypeRegistry } from './registry';
 
 const writeInteger = (
   writer: IBitWriter,
@@ -89,7 +90,7 @@ export class IntType implements IType {
   protected useTwosComplement: boolean = true;
 
   constructor(signed = true, size = 0) {
-    this.signed = signed;
+    this.signed = !!signed;
     this.size = size;
   }
 
@@ -142,9 +143,18 @@ export class IntType implements IType {
     Somehow static type inheritance exists in TypeScript, so I have to add this
     signature overload to use normal static method naming in derived classes
   */
-  static getInstance(...args: any[]): IType;
-  static getInstance(signed?: boolean, size?: number): IType {
+  static getInstance(registry: TypeRegistry, ...args: any[]): IntType;
+  static getInstance(
+    registry: TypeRegistry = defaultTypeRegistry,
+    signed?: boolean,
+    size?: number
+  ): IntType {
     return new IntType(signed, size);
+  }
+
+  static getInstanceFor(registry: TypeRegistry, ...args: any[]): IntType;
+  static getInstanceFor(): IntType {
+    return new IntType();
   }
 
   static getTypeKeys(): Array<string | Function> {
@@ -172,7 +182,11 @@ export class ShortType extends IntType {
     return { type: ShortType.type };
   }
 
-  static getInstance(): IType {
+  static getInstance(): ShortType {
+    return new ShortType();
+  }
+
+  static getInstanceFor(): ShortType {
     return new ShortType();
   }
 
@@ -196,7 +210,11 @@ export class ByteType extends IntType {
     return { type: ByteType.type };
   }
 
-  static getInstance(): IType {
+  static getInstance(): ByteType {
+    return new ByteType();
+  }
+
+  static getInstanceFor(): ByteType {
     return new ByteType();
   }
 
@@ -220,8 +238,15 @@ export class UIntType extends IntType {
     return { type: UIntType.type };
   }
 
-  static getInstance(size?: number): IType {
+  static getInstance(
+    registry: TypeRegistry = defaultTypeRegistry,
+    size?: number
+  ): UIntType {
     return new UIntType(size);
+  }
+
+  static getInstanceFor(): UIntType {
+    return new UIntType();
   }
 
   static getTypeKeys(): Array<string | Function> {
@@ -247,7 +272,11 @@ export class UShortType extends IntType {
     return { type: UShortType.type };
   }
 
-  static getInstance(): IType {
+  static getInstance(): UShortType {
+    return new UShortType();
+  }
+
+  static getInstanceFor(): UShortType {
     return new UShortType();
   }
 
@@ -271,7 +300,11 @@ export class UByteType extends IntType {
     return { type: UByteType.type };
   }
 
-  static getInstance(): IType {
+  static getInstance(): UByteType {
+    return new UByteType();
+  }
+
+  static getInstanceFor(): UByteType {
     return new UByteType();
   }
 

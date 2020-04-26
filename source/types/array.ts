@@ -1,5 +1,9 @@
 import { writeShortLength, readShortLength } from '../utils/lengths';
-import { TypeRegistry, defaultTypeRegistry } from './registry';
+import {
+  TypeRegistry,
+  defaultTypeRegistry,
+  getValueTypeDefinition,
+} from './registry';
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 import { IntType } from './int';
@@ -23,10 +27,10 @@ export class ArrayType implements IType {
   public elementType: IType;
 
   constructor(
-    elementType: IType = IntType.getInstance(),
+    elementType?: IType,
     registry: TypeRegistry = defaultTypeRegistry
   ) {
-    this.elementType = elementType;
+    this.elementType = elementType || IntType.getInstance(registry);
     this.registry = registry;
   }
 
@@ -60,10 +64,23 @@ export class ArrayType implements IType {
   }
 
   static getInstance(
-    elementType: IType,
-    registry: TypeRegistry = defaultTypeRegistry
+    registry: TypeRegistry = defaultTypeRegistry,
+    elementType: IType
   ): IType {
     return new ArrayType(elementType, registry);
+  }
+
+  static getInstanceFor(
+    registry: TypeRegistry = defaultTypeRegistry,
+    value: any[]
+  ): IType {
+    if (!value || !value.length) {
+      return null;
+    }
+
+    const elementType = getValueTypeDefinition(value[0]);
+
+    return new ArrayType(elementType.getInstanceFor(registry, value), registry);
   }
 
   static getTypeKeys(): Array<string | Function> {

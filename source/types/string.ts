@@ -96,7 +96,11 @@ export class StringType implements IType {
     return [StringType.type, String, StringType];
   }
 
-  static getInstance(): IType {
+  static getInstance(): StringType {
+    return new StringType();
+  }
+
+  static getInstanceFor(): StringType {
     return new StringType();
   }
 

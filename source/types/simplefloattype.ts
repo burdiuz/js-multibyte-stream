@@ -1,6 +1,7 @@
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 import { IntType } from './int';
+import { TypeRegistry, defaultTypeRegistry } from './registry';
 
 export class SimpleFloatType extends IntType {
   static readonly type = 'sfloat';
@@ -29,11 +30,16 @@ export class SimpleFloatType extends IntType {
   }
 
   static getInstance(
+    registry: TypeRegistry = defaultTypeRegistry,
     signed?: boolean,
     fractionDigits?: number,
     size?: number
-  ): IType {
+  ): SimpleFloatType {
     return new SimpleFloatType(signed, fractionDigits, size);
+  }
+
+  static getInstanceFor(): SimpleFloatType {
+    return new SimpleFloatType();
   }
 
   static getTypeKeys(): Array<string | Function> {

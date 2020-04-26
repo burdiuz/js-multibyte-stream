@@ -1,4 +1,5 @@
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
+import { TypeRegistry } from './registry';
 
 type SimpleValue = string | number | boolean | SimpleObject | SimpleArray;
 
@@ -22,6 +23,7 @@ export interface IType {
 export interface ITypeStatic {
   type: string;
   getTypeKeys(): Array<string | Function>;
-  getInstance(...args: any): IType;
+  getInstance(registry: TypeRegistry, ...args: any): IType;
+  getInstanceFor(registry: TypeRegistry, value: any, ...args: any): IType;
   fromObject(data: ITypeData): IType;
 }

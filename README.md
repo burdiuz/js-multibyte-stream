@@ -1,42 +1,58 @@
 # @actualwave/multibyte-stream
+
 This library allows to write and read data between bytes. It allows to store booleans using single bit to store integers using less than a byte and so on.
 
-## Example
-[BitAnimation](https://burdiuz.github.io/bitanimation/) -- Application to create simple pixelated animations. It uses MultibyteStream to store entire animation configuration in URL parameter "a". This allows easy sharing of the animation and undo/redo by simple going back and forward in the browser.  
+## Examples
+[Test Page](https://burdiuz.github.io/js-multibyte-stream) -- Here you can put your JSON data and see auto-generated schema and resulting multibyte stream data generated with default settings.
+
+[BitAnimation](https://burdiuz.github.io/bitanimation/) -- Application to create simple pixelated animations. It uses MultibyteStream to store entire animation configuration in URL parameter "a". This allows easy sharing of the animation and undo/redo by simple going back and forward in the browser.
 
 ## Motivation
+
 I wanted a data format that minifies payload to smallest size, so I could save or transfer more data within a limit. To make such compact data format I decided to cut everything that should not be saved/transferred, so this library only saves the values ignoring anything about data structure and field names.
 Let's look at this object:
+
 ```javascript
 const data = {
   number: 1234,
   boolean: true,
-  string: "Hello",
+  string: 'Hello',
 };
 ```
+
 When encoded into JSON, it keeps data structure
+
 ```json
-{"number":1234,"boolean":true,"string":"Hello"}
+{ "number": 1234, "boolean": true, "string": "Hello" }
 ```
+
 If we encode it into URL variables, it will loook like
+
 ```
 number=1234&boolean=true&string=Hello
 ```
+
 But if we cut all the structure and leave only values, it should be
+
 ```
 1234trueHello
 ```
+
 Now it's shortest, but then, look at it's number and boolean values in binary format(strings are more complicated to compact and usually they keep most of the occupied space).
+
 ```
 00000100 11010010 -- 1234 takes at least 2 bytes
 00000001 -- true takes at least one byte
 ```
+
 12 bits left unused and still occupied. But we could compact it even more by placing them in-between bytes
+
 ```
 10011010010 1 -- 1234 and true combined in 12 bits. 4 bits are still free and could be used for another value
 ```
 
 Such compact data format would allow, for example, to store more data in places like URL in form of Base64-encoded string. Like `DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA` string contains an object with numbers, booleans, array and nested object, and it could be stored in URL `htts://mydomain.com/?DBQSEruPv7WFY2VAYKQ%2BysKDB7vn06Onu56DT9K4gnJw%2BXWA`.
+
 ```javascript
 // config data to save
 const config = {
@@ -56,26 +72,36 @@ const config = {
 };
 
 // prepare enumerations
-const fieldType = EnumType.getInstance(['name', 'address', 'email', 'date']);
-const orderType = EnumType.getInstance(['asc', 'desc']);
-const panelType = EnumType.getInstance(['top-bar', 'bottom-bar', 'side-bar']);
+const fieldType = EnumType.getInstance(undefined, [
+  'name',
+  'address',
+  'email',
+  'date',
+]);
+const orderType = EnumType.getInstance(undefined, ['asc', 'desc']);
+const panelType = EnumType.getInstance(undefined, [
+  'top-bar',
+  'bottom-bar',
+  'side-bar',
+]);
 
 // create config schema
-const configType = ObjectType.getInstance({
-  fields: ArrayType.getInstance(fieldType),
-  sortBy: ObjectType.getInstance({
+const configType = ObjectType.getInstance(undefined, {
+  fields: ArrayType.getInstance(undefined, fieldType),
+  sortBy: ObjectType.getInstance(undefined, {
     field: fieldType,
     order: orderType,
   }),
   filterBy: ArrayType.getInstance(
-    ObjectType.getInstance({
+    undefined,
+    ObjectType.getInstance(undefined, {
       field: fieldType,
       value: StringType.getInstance(),
     })
   ),
-  page: IntType.getInstance(false, 6),
+  page: IntType.getInstance(undefined, false, 6),
   query: StringType.getInstance(),
-  panels: ArrayType.getInstance(panelType),
+  panels: ArrayType.getInstance(undefined, panelType),
   theme: StringType.getInstance(),
 });
 
@@ -85,9 +111,14 @@ const schema = new Schema(configType);
 const values = schema.saveBase64From(config);
 console.log(values); // DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA
 ```
-This allows to persist more insignificant data on client's side without the need to save it on server. Such Base64 string could then be loaded using same schema.
+
+> Note: the first parameter in `.getInstance()` is an instance of TypeRegistry. Passing `undefined` indicates that default registry should be used.
+> This allows to persist more insignificant data on client's side without the need to save it on server. Such Base64 string could then be loaded using same schema.
+
 ```javascript
-const loadedConfig = schema.loadBase64To('DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA');
+const loadedConfig = schema.loadBase64To(
+  'DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA'
+);
 console.log(loadedConfig);
 /*
 {
@@ -121,9 +152,11 @@ console.log(loadedConfig);
 }
 */
 ```
+
 > Note that schema must be exactly the same. Since values are stored as a stream it is crucial to provide exactly same schema to be able to restore data.
 
 It may also help to communicate with server or any other party. For example, some years ago communication between client and server looked like
+
 ```
 - let's request something from server
 - pray
@@ -133,7 +166,9 @@ It may also help to communicate with server or any other party. For example, som
 - response has more fields than we expected, ok
 - everything received exactly as expected, impossible?
 ```
+
 These days communication is usually stricter and reads like
+
 ```
 - let's request something from server
 - wait
@@ -143,9 +178,11 @@ These days communication is usually stricter and reads like
 - response has more fields than we expected, failure
 - everything received exactly as expected, finally, we may proceed
 ```
+
 All parties that work with data know it's structure and field types, so why to pass it? Let's just communicate values and apply them to structures we already know. This means structures must be equal across all parties that work with data, but usually it is already like that.
 
 ## Usage
+
 There are multiple ways how this package could be used -- via BitStream, Data Types or Schema.
 
 ### BitStream
@@ -197,6 +234,7 @@ console.log(
 ```
 
 BitReader code example:
+
 ```javascript
 const reader = new BitReader();
 
@@ -212,23 +250,28 @@ reader.read(8); // 100
 ```
 
 ### Data Types
+
 Data Types are classes that help to read and write data of specific types. Currently I've implemented these types
- - **BoolType** uses one bit to record value.
- - **IntType** saves real numbers. Can be customized to save number sign, use [two's complement](https://en.wikipedia.org/wiki/Two%27s_complement) for negative numbers and to use variable or specific size. Additionaly provided derived classes to record integers  with specific size -- ShortType, ByteType, UIntType, UShortType, UByteType.
- - **SimpleFloatType** is derived from InType. It simply multiples float to preserve specified accuracy and transforms into integer. Accuracy could be specified by passing value to constructor, by default it's 3 symbols after comma.
- - **StringType** writes strings using variable byte length for each character. most significant bit used to determine if new character starts(1) or current continues(0).
- - **ObjectType** records values of object fields to stream. It should be provided with object schema or can read object schema from populated object(properties with default values to read data types from them).
- - **ArrayType** uses any other type for array elements and records it's content to stream. It works with arrays that contain elements of same type, values of other types will lead to unexpected results.
- - **BigIntType** works with [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) values of length up to 128 bits.
- - **EnumType** should be provided with list of possible values, saves index of the value to stream.
+
+- **BoolType** uses one bit to record value.
+- **IntType** saves real numbers. Can be customized to save number sign, use [two's complement](https://en.wikipedia.org/wiki/Two%27s_complement) for negative numbers and to use variable or specific size. Additionaly provided derived classes to record integers with specific size -- ShortType, ByteType, UIntType, UShortType, UByteType.
+- **SimpleFloatType** is derived from InType. It simply multiples float to preserve specified accuracy and transforms into integer. Accuracy could be specified by passing value to constructor, by default it's 3 symbols after comma.
+- **StringType** writes strings using variable byte length for each character. most significant bit used to determine if new character starts(1) or current continues(0).
+- **ObjectType** records values of object fields to stream. It should be provided with object schema or can read object schema from populated object(properties with default values to read data types from them).
+- **ArrayType** uses any other type for array elements and records it's content to stream. It works with arrays that contain elements of same type, values of other types will lead to unexpected results.
+- **BigIntType** works with [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) values of length up to 128 bits.
+- **EnumType** should be provided with list of possible values, saves index of the value to stream.
 
 > IntType with variable size uses first 3 bits to specify how many of 4-bit chunks used to record the actual value.
 
 ### Type Registry
+
 This project contains so-called type registry, it contains all Data Type classes that are used in automatic schema generation via `readSchemaFrom`(or in ObjectType/ArrayType) and in serializing schemas into raw objects and back. Withithn the library all available Data Types are registered using `addTypeDefinition()` function which does all the work.
 
 ### Schema
+
 Schema object contains ObjectType in it and provides simple API to generate Uint8Array from object properties and back. Also may use [Base64](https://en.wikipedia.org/wiki/Base64)-encoded string.
+
 ```javascript
 // sample data
 const data = {
@@ -249,7 +292,9 @@ const schema = readSchemaFrom(data);
 console.log(schema.saveBase64From(data)); // QoCCBhCCkGIOQghIDRtkGNDAbjv5pFrjjjjjIwlkR7g=
 
 // read data from Base64 string using same schema
-const newData = schema.loadBase64To('QoCCBhCCkGIOQghIDRtkGNDAbjv5pFrjjjjjIwlkR7g=');
+const newData = schema.loadBase64To(
+  'QoCCBhCCkGIOQghIDRtkGNDAbjv5pFrjjjjjIwlkR7g='
+);
 console.log(newData);
 /*
 {
@@ -259,7 +304,9 @@ console.log(newData);
   ...
 */
 ```
+
 To see or save schema use toObject() method and `console.log(schema.toObject());` from example above will result in
+
 ```json
 {
   "type": "object",
@@ -308,7 +355,9 @@ To see or save schema use toObject() method and `console.log(schema.toObject());
   }
 }
 ```
+
 This simple version of schema could be stored elsewhere in JSON and restored back using Schema.fromObject();
+
 ```javascript
 const schema = Schema.fromObject(JSON.parse(jsonEncodedSchema));
 
@@ -316,6 +365,7 @@ schema.loadBase64To(queryData, currentConfig);
 ```
 
 Save and load nested arrays of booleans
+
 ```javascript
 const X = 1;
 const _ = 0;
@@ -333,7 +383,7 @@ const config = {
 };
 
 const schema = new Schema(
-  ObjectType.getInstance({
+  ObjectType.getInstance(undefined, {
     frames: new ArrayType(new ArrayType(new ArrayType(new IntType(false, 1)))),
   })
 );
@@ -344,7 +394,9 @@ console.log(schema.loadBase64To(data));
 ```
 
 ## Extensions
+
 To extend this library with new data types or special cases for already existing data types, you have to create new Data Type class and register it using Type Registry.
+
 ```javascript
 import { defaultTypeRegistry, addTypeDefinition } from '@actualwave/multibyte-stream';
 
@@ -408,7 +460,9 @@ Register your data type so it cam be applied in auto-generated custom schemas(fo
 */
 addTypeDefinition(MyCustomType);
 ```
+
 If you want your data type to be used for custom type of object, just ad dit to the list in `getTypeKeys()`, this works for simple JS types.
+
 ```javascript
   static getTypeKeys(): Array<string | Function> {
     /*

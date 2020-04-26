@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Multibyte Stream</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.50.2/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.50.2/addon/lint/lint.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.50.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.50.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.50.2/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.50.2/addon/edit/matchbrackets.min.js"></script>
+    <script src="./multibyte-stream.umd.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      body {
+        padding: 20px;
+      }
+
+      .CodeMirror {
+        height: 100%;
+        border: 1px solid #aaa;
+      }
+
+      h2,
+      h3 {
+        font-weight: 300;
+      }
+
+      .row {
+        width: 100%;
+        display: flex;
+        align-items: stretch;
+      }
+
+      body,
+      .column {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .cell,
+      #editor {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row" style="flex: 1;">
+      <div class="column" style="flex: 1; margin-right: 20px;">
+        <h2>Your JSON here</h2>
+        <div class="cell" id="source"></div>
+      </div>
+      <div class="column" style="flex: 1;">
+        <h2>JSON Schema</h2>
+        <div class="cell" id="schema"></div>
+      </div>
+    </div>
+    <h2>Multibyte Data</h2>
+    <div class="column" style="margin: 20px;">
+      <label id="result-label" for="result"></label>
+      <input type="text" id="result" readonly />
+    </div>
+    <h2>Base64-encoded Data</h2>
+    <div class="column" style="margin: 20px;">
+      <input type="text" id="encoded" readonly />
+    </div>
+  </body>
+  <script>
+    const sourceEditor = CodeMirror(document.querySelector('#source'), {
+      lineNumbers: true,
+      matchBrackets: true,
+      value: '',
+      mode: 'application/json',
+    });
+
+    const schemaEditor = CodeMirror(document.querySelector('#schema'), {
+      lineNumbers: true,
+      matchBrackets: true,
+      readOnly: true,
+      value: '',
+      mode: 'application/json',
+    });
+
+    const applyData = () => {
+      try {
+        const data = JSON.parse(sourceEditor.getValue());
+        console.log(data);
+        const schema = MultibyteStream.readSchemaFrom(data);
+        console.log(schema);
+        schemaEditor.setValue(JSON.stringify(schema.toObject(), null, 2));
+
+        const result = schema.saveDataFrom(data);
+
+        document.querySelector('#result-label').innerText = `${
+          result.length * result.BYTES_PER_ELEMENT
+        } bytes`;
+
+        document.querySelector(
+          '#result'
+        ).value = MultibyteStream.typedArrayToString(result);
+
+        document.querySelector('#encoded').value = schema.saveBase64From(data);
+      } catch (error) {
+        console.log(error);
+
+        document.querySelector('#result-label').innerText = '';
+        document.querySelector('#result').value = '';
+        document.querySelector('#encoded').value = '';
+      }
+    };
+
+    sourceEditor.on('changes', applyData);
+
+    sourceEditor.setValue(`{
+  "bool": false,
+  "num": 777,
+  "arr": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
+  "obj": {
+    "one": true,
+    "two": false,
+    "three": true,
+    "num": 8765
+  }
+}`);
+
+    applyData();
+  </script>
+</html>

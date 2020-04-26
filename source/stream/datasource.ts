@@ -16,6 +16,25 @@ export const setDataSourceLength = (
   return values;
 };
 
+export const typedArrayToString = (
+  array: TypedArray,
+  start = 0,
+  length = array.length - start
+) => {
+  const frameSize = array.BYTES_PER_ELEMENT << 3;
+
+  let str = '';
+
+  for (let index = 0; index < length; index++) {
+    const item = array[index] >>> 0;
+    const frame = item.toString(2).padStart(frameSize, '0');
+
+    str = `${str} ${frame}`;
+  }
+
+  return str.trim();
+};
+
 export class DataSource implements IDataSource {
   protected source: TypedArray;
   protected position: number = 0;
@@ -75,17 +94,8 @@ export class DataSource implements IDataSource {
     return this.source;
   }
 
-  toString(start = 0, length = this.source.length - start) {
-    let str = '';
-
-    for (let index = 0; index < length; index++) {
-      const item = this.source[index] >>> 0;
-      const frame = item.toString(2).padStart(this.getFrameSize(), '0');
-
-      str = `${str} ${frame}`;
-    }
-
-    return str.trim();
+  toString(start = 0, length?: number) {
+    return typedArrayToString(this.source, start, length);
   }
 }
 

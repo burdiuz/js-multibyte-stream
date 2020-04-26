@@ -47,3 +47,9 @@ export const hasTypeDefinitionFor = (key: string | Function): boolean =>
 
 export const getTypeDefinitionFor = (key: string | Function): ITypeStatic =>
   defaultTypeRegistry.getTypeFor(key);
+
+export const getValueTypeDefinition = (value: any) => {
+  const { constructor } = Object.getPrototypeOf(value);
+
+  return getTypeDefinitionFor(constructor);
+};

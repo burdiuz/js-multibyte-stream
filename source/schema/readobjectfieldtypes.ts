@@ -1,5 +1,5 @@
 import { IType } from '../types/itype';
-import { defaultTypeRegistry } from '../types/registry';
+import { defaultTypeRegistry, getValueTypeDefinition } from '../types/registry';
 
 export const readObjectFieldTypes = (
   data: { [key: string]: any },
@@ -13,8 +13,7 @@ export const readObjectFieldTypes = (
       return;
     }
 
-    const { constructor } = Object.getPrototypeOf(value);
-    const type = registry.getTypeFor(constructor).getInstance();
+    const type = getValueTypeDefinition(value).getInstanceFor(registry, value);
 
     if (type) {
       target[key] = type;

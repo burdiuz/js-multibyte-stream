@@ -1,6 +1,7 @@
 import { getBitCount } from './../utils/getBitCount';
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
+import { TypeRegistry } from './registry';
 
 /*
  Enumeration type receives an array of values and saves to stream an index of the value.
@@ -36,11 +37,15 @@ export class EnumType implements IType {
     return [EnumType.type, EnumType];
   }
 
-  static getInstance(values: Array<any>): IType {
+  static getInstance(registry: TypeRegistry, values: Array<any>): IType {
+    return new EnumType(values);
+  }
+
+  static getInstanceFor(registry: TypeRegistry, values: Array<any>): IType {
     return new EnumType(values);
   }
 
   static fromObject({ values }: ITypeData & { values: Array<any> }): EnumType {
-    return new EnumType(values as Array<any>);
+    return new EnumType(values);
   }
 }

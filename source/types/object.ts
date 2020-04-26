@@ -98,27 +98,26 @@ export class ObjectType implements IType {
     return { type: ObjectType.type, fields };
   }
 
-  static getInstanceFrom(
-    obj?: Obj,
-    registry = defaultTypeRegistry
-  ): ObjectType {
-    const type = new ObjectType(registry);
-
-    if (obj) {
-      type.setSchemaFrom(obj);
-    }
-
-    return type;
-  }
-
   static getInstance(
-    schema?: { [key: string]: IType },
-    registry = defaultTypeRegistry
+    registry: TypeRegistry = defaultTypeRegistry,
+    schema?: { [key: string]: IType }
   ): ObjectType {
     const type = new ObjectType(registry);
 
     if (schema) {
       type.setSchema(schema);
+    }
+
+    return type;
+  }
+  static getInstanceFor(
+    registry: TypeRegistry = defaultTypeRegistry,
+    value?: Obj
+  ): ObjectType {
+    const type = new ObjectType(registry);
+
+    if (value) {
+      type.setSchemaFrom(value);
     }
 
     return type;

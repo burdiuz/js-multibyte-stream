@@ -1,0 +1,13 @@
+{
+  "name": "multibyte-stream-show",
+  "version": "1.0.0",
+  "description": "Page to show how data transformed with Multibyte Stream library",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

@@ -52,6 +52,10 @@ export class BigIntType implements IType {
     return new BigIntType();
   }
 
+  static getInstanceFor(): BigIntType {
+    return new BigIntType();
+  }
+
   static getTypeKeys(): Array<string | Function> {
     return [BigIntType.type, BigInt, BigIntType];
   }

@@ -2,17 +2,6 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-const MASK_MAX_INDEX = 32;
-const MASKS = ((index) => {
-    const list = [0];
-    while (index > 0) {
-        list[index] = Math.pow(2, index) - 1;
-        index--;
-    }
-    return list;
-})(MASK_MAX_INDEX);
-const getMaskOfLength = (length) => MASKS[length];
-
 const setDataSourceLength = (source, length) => {
     if (length < source.length) {
         return source.slice(0, length);
@@ -21,6 +10,16 @@ const setDataSourceLength = (source, length) => {
     const values = new ArrayDef(length);
     values.set(source);
     return values;
+};
+const typedArrayToString = (array, start = 0, length = array.length - start) => {
+    const frameSize = array.BYTES_PER_ELEMENT << 3;
+    let str = '';
+    for (let index = 0; index < length; index++) {
+        const item = array[index] >>> 0;
+        const frame = item.toString(2).padStart(frameSize, '0');
+        str = `${str} ${frame}`;
+    }
+    return str.trim();
 };
 class DataSource {
     constructor(source = new Uint8Array(0xff)) {
@@ -66,14 +65,8 @@ class DataSource {
     getSource() {
         return this.source;
     }
-    toString(start = 0, length = this.source.length - start) {
-        let str = '';
-        for (let index = 0; index < length; index++) {
-            const item = this.source[index] >>> 0;
-            const frame = item.toString(2).padStart(this.getFrameSize(), '0');
-            str = `${str} ${frame}`;
-        }
-        return str.trim();
+    toString(start = 0, length) {
+        return typedArrayToString(this.source, start, length);
     }
 }
 class DynamicDataSource extends DataSource {
@@ -92,6 +85,17 @@ class DynamicDataSource extends DataSource {
         }
     }
 }
+
+const MASK_MAX_INDEX = 32;
+const MASKS = ((index) => {
+    const list = [0];
+    while (index > 0) {
+        list[index] = Math.pow(2, index) - 1;
+        index--;
+    }
+    return list;
+})(MASK_MAX_INDEX);
+const getMaskOfLength = (length) => MASKS[length];
 
 var Endian;
 (function (Endian) {
@@ -402,6 +406,9 @@ class BigIntType {
     static getInstance() {
         return new BigIntType();
     }
+    static getInstanceFor() {
+        return new BigIntType();
+    }
     static getTypeKeys() {
         return [BigIntType.type, BigInt, BigIntType];
     }
@@ -502,6 +509,9 @@ class StringType {
     static getInstance() {
         return new StringType();
     }
+    static getInstanceFor() {
+        return new StringType();
+    }
     static fromObject() {
         return new StringType();
     }
@@ -562,6 +572,41 @@ const fromOnesComplementRepresentation = (value, length) => {
     return value & mask;
 };
 
+class TypeRegistry {
+    constructor() {
+        this.map = new Map();
+    }
+    add(type) {
+        const keys = type.getTypeKeys();
+        keys.forEach((key) => this.addTypeFor(key, type));
+    }
+    addTypeFor(key, type) {
+        this.map.set(key, type);
+    }
+    hasTypeFor(key) {
+        return this.map.has(key);
+    }
+    getTypeFor(key) {
+        return this.map.get(key);
+    }
+    fromObject(data) {
+        const definition = this.getTypeFor(data.type);
+        if (!definition) {
+            throw new Error(`Data type "${data.type}" cannot be found`);
+        }
+        return definition.fromObject(data);
+    }
+}
+const defaultTypeRegistry = new TypeRegistry();
+const addTypeDefinition = (...types) => types.map((type) => defaultTypeRegistry.add(type));
+const addTypeDefinitionFor = (key, type) => defaultTypeRegistry.addTypeFor(key, type);
+const hasTypeDefinitionFor = (key) => defaultTypeRegistry.hasTypeFor(key);
+const getTypeDefinitionFor = (key) => defaultTypeRegistry.getTypeFor(key);
+const getValueTypeDefinition = (value) => {
+    const { constructor } = Object.getPrototypeOf(value);
+    return getTypeDefinitionFor(constructor);
+};
+
 const writeInteger = (writer, value, size, signed, twosc) => {
     if (!signed) {
         writer.write(value < 0 ? -value : value, size);
@@ -601,7 +646,7 @@ variable length:
 class IntType {
     constructor(signed = true, size = 0) {
         this.useTwosComplement = true;
-        this.signed = signed;
+        this.signed = !!signed;
         this.size = size;
     }
     writeTo(writer, value) {
@@ -626,8 +671,11 @@ class IntType {
             twosComplement: this.useTwosComplement,
         };
     }
-    static getInstance(signed, size) {
+    static getInstance(registry = defaultTypeRegistry, signed, size) {
         return new IntType(signed, size);
+    }
+    static getInstanceFor() {
+        return new IntType();
     }
     static getTypeKeys() {
         return [IntType.type, Number, IntType];
@@ -650,6 +698,9 @@ class ShortType extends IntType {
     static getInstance() {
         return new ShortType();
     }
+    static getInstanceFor() {
+        return new ShortType();
+    }
     static getTypeKeys() {
         return [ShortType.type, ShortType];
     }
@@ -668,6 +719,9 @@ class ByteType extends IntType {
     static getInstance() {
         return new ByteType();
     }
+    static getInstanceFor() {
+        return new ByteType();
+    }
     static getTypeKeys() {
         return [ByteType.type, ByteType];
     }
@@ -683,8 +737,11 @@ class UIntType extends IntType {
     toObject() {
         return { type: UIntType.type };
     }
-    static getInstance(size) {
+    static getInstance(registry = defaultTypeRegistry, size) {
         return new UIntType(size);
+    }
+    static getInstanceFor() {
+        return new UIntType();
     }
     static getTypeKeys() {
         return [UIntType.type, UIntType];
@@ -706,6 +763,9 @@ class UShortType extends IntType {
     static getInstance() {
         return new UShortType();
     }
+    static getInstanceFor() {
+        return new UShortType();
+    }
     static getTypeKeys() {
         return [UShortType.type, UShortType];
     }
@@ -722,6 +782,9 @@ class UByteType extends IntType {
         return { type: UByteType.type };
     }
     static getInstance() {
+        return new UByteType();
+    }
+    static getInstanceFor() {
         return new UByteType();
     }
     static getTypeKeys() {
@@ -750,8 +813,11 @@ class SimpleFloatType extends IntType {
         const { signed, fractionDigits, size } = this;
         return { type: SimpleFloatType.type, signed, fractionDigits, size };
     }
-    static getInstance(signed, fractionDigits, size) {
+    static getInstance(registry = defaultTypeRegistry, signed, fractionDigits, size) {
         return new SimpleFloatType(signed, fractionDigits, size);
+    }
+    static getInstanceFor() {
+        return new SimpleFloatType();
     }
     static getTypeKeys() {
         return [SimpleFloatType.type, SimpleFloatType];
@@ -764,45 +830,13 @@ class SimpleFloatType extends IntType {
 }
 SimpleFloatType.type = 'sfloat';
 
-class TypeRegistry {
-    constructor() {
-        this.map = new Map();
-    }
-    add(type) {
-        const keys = type.getTypeKeys();
-        keys.forEach((key) => this.addTypeFor(key, type));
-    }
-    addTypeFor(key, type) {
-        this.map.set(key, type);
-    }
-    hasTypeFor(key) {
-        return this.map.has(key);
-    }
-    getTypeFor(key) {
-        return this.map.get(key);
-    }
-    fromObject(data) {
-        const definition = this.getTypeFor(data.type);
-        if (!definition) {
-            throw new Error(`Data type "${data.type}" cannot be found`);
-        }
-        return definition.fromObject(data);
-    }
-}
-const defaultTypeRegistry = new TypeRegistry();
-const addTypeDefinition = (...types) => types.map((type) => defaultTypeRegistry.add(type));
-const addTypeDefinitionFor = (key, type) => defaultTypeRegistry.addTypeFor(key, type);
-const hasTypeDefinitionFor = (key) => defaultTypeRegistry.hasTypeFor(key);
-const getTypeDefinitionFor = (key) => defaultTypeRegistry.getTypeFor(key);
-
 const readObjectFieldTypes = (data, registry = defaultTypeRegistry, target = {}) => {
     Object.keys(data).forEach((key) => {
         const value = data[key];
         if (value === null || value === undefined || key in target) {
             return;
         }
-        const { constructor } = Object.getPrototypeOf(value);
-        const type = registry.getTypeFor(constructor).getInstance();
+        const type = getValueTypeDefinition(value).getInstanceFor(registry, value);
         if (type) {
             target[key] = type;
         }
@@ -878,17 +912,17 @@ class ObjectType {
         });
         return { type: ObjectType.type, fields };
     }
-    static getInstanceFrom(obj, registry = defaultTypeRegistry) {
-        const type = new ObjectType(registry);
-        if (obj) {
-            type.setSchemaFrom(obj);
-        }
-        return type;
-    }
-    static getInstance(schema, registry = defaultTypeRegistry) {
+    static getInstance(registry = defaultTypeRegistry, schema) {
         const type = new ObjectType(registry);
         if (schema) {
             type.setSchema(schema);
+        }
+        return type;
+    }
+    static getInstanceFor(registry = defaultTypeRegistry, value) {
+        const type = new ObjectType(registry);
+        if (value) {
+            type.setSchemaFrom(value);
         }
         return type;
     }
@@ -923,8 +957,8 @@ console.log(arr.readFrom(stream));
 console.log(stream.getSource().toString());
 */
 class ArrayType {
-    constructor(elementType = IntType.getInstance(), registry = defaultTypeRegistry) {
-        this.elementType = elementType;
+    constructor(elementType, registry = defaultTypeRegistry) {
+        this.elementType = elementType || IntType.getInstance(registry);
         this.registry = registry;
     }
     writeTo(writer, value) {
@@ -948,8 +982,15 @@ class ArrayType {
             elementsOfType: this.elementType.toObject(),
         };
     }
-    static getInstance(elementType, registry = defaultTypeRegistry) {
+    static getInstance(registry = defaultTypeRegistry, elementType) {
         return new ArrayType(elementType, registry);
+    }
+    static getInstanceFor(registry = defaultTypeRegistry, value) {
+        if (!value || !value.length) {
+            return null;
+        }
+        const elementType = getValueTypeDefinition(value[0]);
+        return new ArrayType(elementType.getInstanceFor(registry, value), registry);
     }
     static getTypeKeys() {
         return [ArrayType.type, Array, ArrayType];
@@ -979,6 +1020,9 @@ class BoolType {
         return [BoolType.type, Boolean, BoolType];
     }
     static getInstance() {
+        return new BoolType();
+    }
+    static getInstanceFor() {
         return new BoolType();
     }
     static fromObject() {
@@ -1012,7 +1056,10 @@ class EnumType {
     static getTypeKeys() {
         return [EnumType.type, EnumType];
     }
-    static getInstance(values) {
+    static getInstance(registry, values) {
+        return new EnumType(values);
+    }
+    static getInstanceFor(registry, values) {
         return new EnumType(values);
     }
     static fromObject({ values }) {
@@ -1103,6 +1150,8 @@ class Schema {
 exports.BitReader = BitReader;
 exports.BitStream = BitStream;
 exports.BitWriter = BitWriter;
+exports.DataSource = DataSource;
+exports.DynamicDataSource = DynamicDataSource;
 exports.Schema = Schema;
 exports.TypeRegistry = TypeRegistry;
 exports.addTypeDefinition = addTypeDefinition;
@@ -1111,6 +1160,9 @@ exports.copyWriterConfig = copyWriterConfig;
 exports.createWritableSource = createWritableSource;
 exports.defaultTypeRegistry = defaultTypeRegistry;
 exports.getTypeDefinitionFor = getTypeDefinitionFor;
+exports.getValueTypeDefinition = getValueTypeDefinition;
 exports.hasTypeDefinitionFor = hasTypeDefinitionFor;
 exports.readSchemaFrom = readSchemaFrom;
+exports.setDataSourceLength = setDataSourceLength;
+exports.typedArrayToString = typedArrayToString;
 exports.types = types;

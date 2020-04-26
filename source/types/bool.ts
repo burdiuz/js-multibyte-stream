@@ -26,6 +26,10 @@ export class BoolType implements IType {
     return new BoolType();
   }
 
+  static getInstanceFor(): IType {
+    return new BoolType();
+  }
+
   static fromObject(): BoolType {
     return new BoolType();
   }
