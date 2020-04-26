@@ -1,6 +1,6 @@
 {
   "name": "@actualwave/multibyte-stream",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "R/W data in bits, this allows to comapct data and store multiple values in each byte.",
   "main": "dist/multibyte-stream.umd.js",
   "module": "index.js",
