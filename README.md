@@ -1,6 +1,9 @@
 # @actualwave/multibyte-stream
 This library allows to write and read data between bytes. It allows to store booleans using single bit to store integers using less than a byte and so on.
 
+## Example
+[BitAnimation](https://burdiuz.github.io/bitanimation/) -- Application to create simple pixelated animations. It uses MultibyteStream to store entire animation configuration in URL parameter "a". This allows easy sharing of the animation and undo/redo by simple going back and forward in the browser.  
+
 ## Motivation
 I wanted a data format that minifies payload to smallest size, so I could save or transfer more data within a limit. To make such compact data format I decided to cut everything that should not be saved/transferred, so this library only saves the values ignoring anything about data structure and field names.
 Let's look at this object:
