@@ -4,6 +4,7 @@
   "description": "R/W data in bits, this allows to comapct data and store multiple values in each byte.",
   "main": "dist/multibyte-stream.umd.js",
   "module": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "test": "jest",

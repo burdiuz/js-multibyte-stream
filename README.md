@@ -3,7 +3,7 @@
 This library allows to write and read data between bytes. It allows to store booleans using single bit to store integers using less than a byte and so on.
 
 ## Examples
-[Test Page](https://burdiuz.github.io/js-multibyte-stream) -- Here you can put your JSON data and see auto-generated schema and resulting multibyte stream data generated with default settings.
+[Test Page](https://burdiuz.github.io/js-multibyte-stream/) -- Here you can put your JSON data and see auto-generated schema and resulting multibyte stream data generated with default settings.
 
 [BitAnimation](https://burdiuz.github.io/bitanimation/) -- Application to create simple pixelated animations. It uses MultibyteStream to store entire animation configuration in URL parameter "a". This allows easy sharing of the animation and undo/redo by simple going back and forward in the browser.
 
