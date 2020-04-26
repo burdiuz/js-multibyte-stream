@@ -113,6 +113,7 @@ console.log(values); // DBQSEruPv7WFY2VAYKQ+ysKDB7vn06Onu56DT9K4gnJw+XWA
 ```
 
 > Note: the first parameter in `.getInstance()` is an instance of TypeRegistry. Passing `undefined` indicates that default registry should be used.
+
 This allows to persist more insignificant data on client's side without the need to save it on server. Such Base64 string could then be loaded using same schema.
 
 ```javascript
