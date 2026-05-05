@@ -1,6 +1,12 @@
 # @actualwave/multibyte-stream
 
-This library allows to write and read data between bytes. It allows to store booleans using single bit to store integers using less than a byte and so on.
+Bit-level binary serialization for JavaScript. Pack values into the minimum number of bits — booleans in 1 bit, small integers in less than a byte — then read them back with the same schema.
+
+## Installation
+
+```bash
+npm install @actualwave/multibyte-stream
+```
 
 ## Examples
 [Test Page](https://burdiuz.github.io/js-multibyte-stream/) -- Here you can put your JSON data and see auto-generated schema and resulting multibyte stream data generated with default settings.

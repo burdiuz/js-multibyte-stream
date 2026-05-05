@@ -1,7 +1,16 @@
 {
   "compilerOptions": {
-    "types": ["jest"],
     "target": "ES2020",
-    "module": "ES2020"
-  }
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "rootDir": "./src",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "importHelpers": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/**/__tests__/**"]
 }
