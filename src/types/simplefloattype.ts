@@ -5,6 +5,7 @@ import { TypeRegistry, defaultTypeRegistry } from './registry';
 
 export class SimpleFloatType extends IntType {
   static readonly type = 'sfloat';
+  static { defaultTypeRegistry.add(SimpleFloatType); }
 
   private multiplier: number;
 

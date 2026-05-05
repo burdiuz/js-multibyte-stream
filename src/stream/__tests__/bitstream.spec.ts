@@ -42,8 +42,8 @@ describe('BitStream', () => {
       expect(stream.read(4)).toBe(0b0000);
     });
 
-    it('should OR bits when writing over existing data (cannot clear set bits)', () => {
-      stream.write(0b0000, 4);
+    it('should overwrite bits including clearing set bits', () => {
+      stream.write(0b1111, 4);
       stream.setPosition(0);
       stream.write(0b0101, 4);
       stream.setPosition(0);

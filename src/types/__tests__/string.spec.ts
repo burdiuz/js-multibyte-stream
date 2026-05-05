@@ -12,6 +12,10 @@ const roundTrip = (value: string): string => {
 
 describe('StringType', () => {
   describe('#writeTo() / #readFrom()', () => {
+    it('should round-trip an empty string', () => {
+      expect(roundTrip('')).toBe('');
+    });
+
     it('should round-trip a single character', () => {
       expect(roundTrip('a')).toBe('a');
     });

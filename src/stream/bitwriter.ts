@@ -42,7 +42,8 @@ export class BitWriter extends BaseBitRW implements IBitWriter {
       }
 
       let currentFrame = this.source.getCurrentFrame();
-      currentFrame = currentFrame | (currentValue << (leftSpace - currentSize));
+      const clearMask = getMaskOfLength(currentSize) << (leftSpace - currentSize);
+      currentFrame = (currentFrame & ~clearMask) | (currentValue << (leftSpace - currentSize));
 
       this.source.setCurrentFrame(currentFrame);
 

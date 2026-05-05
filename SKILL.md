@@ -124,6 +124,18 @@ Good for integers whose magnitude is not known in advance.
 
 Fields are sorted alphabetically before encoding. This means `{ z, a }` and `{ a, z }` produce the same binary layout. Always provide all schema fields when reading, even if a field is 0 / false / empty.
 
+To override the default alphabetical order, call `setFieldOrder(keys)` on both the writer and reader instances with the same key array:
+
+```typescript
+const writer = ObjectType.getInstance(undefined, { z: new BoolType(), a: new BoolType(), m: new BoolType() });
+const reader = ObjectType.getInstance(undefined, { z: new BoolType(), a: new BoolType(), m: new BoolType() });
+
+writer.setFieldOrder(['z', 'm', 'a']);
+reader.setFieldOrder(['z', 'm', 'a']);
+```
+
+Keys not present in the schema are silently ignored. The order must be identical on both sides.
+
 ## BitReader / BitWriter directly
 
 Use these when you need to handle reading and writing separately, or when the source data already exists.

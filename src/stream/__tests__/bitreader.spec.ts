@@ -66,10 +66,14 @@ describe('BitReader', () => {
   });
 
   describe('#readUInt()', () => {
-    it('should read 32 bits', () => {
-      // JS bitwise ops return signed 32-bit; use a value that fits
+    it('should read 32 bits as unsigned', () => {
       reader.setData(Uint8Array.from([0x01, 0x02, 0x03, 0x04]));
       expect(reader.readUInt()).toBe(0x01020304);
+    });
+
+    it('should return positive value when high bit is set', () => {
+      reader.setData(Uint8Array.from([0xff, 0x00, 0xff, 0x00]));
+      expect(reader.readUInt()).toBe(0xff00ff00);
     });
   });
 

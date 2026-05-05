@@ -27,6 +27,7 @@ console.log(obj.readFrom(stream));
 */
 export class ObjectType implements IType {
   static readonly type = 'object';
+  static { defaultTypeRegistry.add(ObjectType); }
   private registry: TypeRegistry;
   private fields: { [key: string]: IType };
   private fieldList: Array<string>;
@@ -51,6 +52,12 @@ export class ObjectType implements IType {
 
   getSchema() {
     return this.fields;
+  }
+
+  setFieldOrder(keys: string[]) {
+    if (this.fields) {
+      this.fieldList = keys.filter((key) => key in this.fields);
+    }
   }
 
   writeTo(writer: IBitWriter, obj: Obj): void {

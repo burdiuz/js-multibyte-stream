@@ -1,11 +1,13 @@
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
+import { defaultTypeRegistry } from './registry';
 
 /*
 1 bit -- value
 */
 export class BoolType implements IType {
   static readonly type = 'bool';
+  static { defaultTypeRegistry.add(BoolType); }
 
   writeTo(writer: IBitWriter, value: boolean): void {
     writer.write(value ? 1 : 0, 1);

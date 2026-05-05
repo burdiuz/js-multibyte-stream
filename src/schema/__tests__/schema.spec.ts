@@ -1,5 +1,4 @@
 import { describe, it, expect } from '@jest/globals';
-import '../../types/index'; // populate defaultTypeRegistry via side-effects
 import { Schema, readSchemaFrom } from '../schema';
 import { ObjectType } from '../../types/object';
 import { BoolType } from '../../types/bool';

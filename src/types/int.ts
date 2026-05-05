@@ -55,7 +55,7 @@ const readInteger = (
   const value = reader.read(size);
 
   if (!signed) {
-    return value;
+    return value >>> 0;
   }
 
   return (twosc
@@ -85,6 +85,7 @@ variable length:
 */
 export class IntType implements IType {
   static readonly type: string = 'int';
+  static { defaultTypeRegistry.add(IntType); }
   protected signed: boolean;
   protected size: number;
   protected useTwosComplement: boolean = true;
@@ -173,6 +174,7 @@ export class IntType implements IType {
 
 export class ShortType extends IntType {
   static readonly type = 'short';
+  static { defaultTypeRegistry.add(ShortType); }
 
   constructor() {
     super(true, 16);
@@ -201,6 +203,7 @@ export class ShortType extends IntType {
 
 export class ByteType extends IntType {
   static readonly type = 'byte';
+  static { defaultTypeRegistry.add(ByteType); }
 
   constructor() {
     super(true, 8);
@@ -229,6 +232,7 @@ export class ByteType extends IntType {
 
 export class UIntType extends IntType {
   static readonly type = 'uint';
+  static { defaultTypeRegistry.add(UIntType); }
 
   constructor(size = 0) {
     super(false, size);
@@ -263,6 +267,7 @@ export class UIntType extends IntType {
 
 export class UShortType extends IntType {
   static readonly type = 'ushort';
+  static { defaultTypeRegistry.add(UShortType); }
 
   constructor() {
     super(false, 16);
@@ -291,6 +296,7 @@ export class UShortType extends IntType {
 
 export class UByteType extends IntType {
   static readonly type = 'ubyte';
+  static { defaultTypeRegistry.add(UByteType); }
 
   constructor() {
     super(false, 8);

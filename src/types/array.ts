@@ -23,6 +23,7 @@ console.log(stream.getSource().toString());
 */
 export class ArrayType implements IType {
   static readonly type = 'array';
+  static { defaultTypeRegistry.add(ArrayType); }
   protected registry: TypeRegistry;
   public elementType: IType;
 

@@ -14,22 +14,6 @@ import { ArrayType } from './array';
 import { BoolType } from './bool';
 import { EnumType } from './enum';
 export * from './registry';
-import { addTypeDefinition } from './registry';
-
-addTypeDefinition(BoolType);
-addTypeDefinition(
-  IntType,
-  ShortType,
-  ByteType,
-  UIntType,
-  UShortType,
-  UByteType
-);
-addTypeDefinition(SimpleFloatType);
-addTypeDefinition(BigIntType);
-addTypeDefinition(StringType);
-addTypeDefinition(ObjectType);
-addTypeDefinition(ArrayType);
 
 export const types = {
   BigIntType,

@@ -2,6 +2,7 @@ import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
 import { copyWriterConfig } from '../stream/bitwriter';
 import { writeShortLength, readShortLength } from '../utils/lengths';
+import { defaultTypeRegistry } from './registry';
 
 /*
 Ideas for other string writing implementations
@@ -37,6 +38,7 @@ cycle:
 */
 export class StringType implements IType {
   static readonly type = 'string';
+  static { defaultTypeRegistry.add(StringType); }
 
   writeTo(writer: IBitWriter, value: string): void {
     const chars = copyWriterConfig(writer);
@@ -62,8 +64,9 @@ export class StringType implements IType {
 
   readFrom(reader: IBitReader): string {
     let value = '';
-    let charCode = 20;
+    let charCode = 0;
     let partCount = 0;
+    let started = false;
 
     let length = readShortLength(reader);
 
@@ -71,9 +74,12 @@ export class StringType implements IType {
       const part = reader.read(8);
 
       if (part >> 7 === 1) {
-        value = `${value}${String.fromCharCode(charCode)}`;
+        if (started) {
+          value += String.fromCharCode(charCode);
+        }
         charCode = part & 0b1111111;
         partCount = 1;
+        started = true;
       } else {
         charCode = ((part & 0b1111111) << (7 * partCount)) | charCode;
         partCount++;
@@ -82,8 +88,9 @@ export class StringType implements IType {
       length--;
     }
 
-    // add last read char code and remove first space
-    value = `${value.substr(1)}${String.fromCharCode(charCode)}`;
+    if (started) {
+      value += String.fromCharCode(charCode);
+    }
 
     return value;
   }

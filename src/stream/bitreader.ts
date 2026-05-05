@@ -68,6 +68,6 @@ export class BitReader extends BaseBitRW implements IBitReader {
   }
 
   readUInt() {
-    return this.read(32);
+    return this.read(32) >>> 0;
   }
 }

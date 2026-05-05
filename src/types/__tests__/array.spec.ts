@@ -1,5 +1,4 @@
 import { describe, it, expect } from '@jest/globals';
-import '../index'; // populate defaultTypeRegistry via side-effects
 import { BitStream } from '../../stream/bitstream';
 import { ArrayType } from '../array';
 import { IntType } from '../int';

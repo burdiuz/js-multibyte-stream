@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import '../index'; // populate defaultTypeRegistry via side-effects
 import { BitStream } from '../../stream/bitstream';
 import { ObjectType } from '../object';
 import { BoolType } from '../bool';
@@ -104,6 +103,30 @@ describe('ObjectType', () => {
       type.writeTo(stream, { z: true, a: false, m: true });
       stream.setPosition(0);
       const result = type.readFrom(stream);
+
+      expect(result).toEqual({ z: true, a: false, m: true });
+    });
+
+    it('#setFieldOrder() should override alphabetical order', () => {
+      const writer = ObjectType.getInstance(defaultTypeRegistry, {
+        z: new BoolType(),
+        a: new BoolType(),
+        m: new BoolType(),
+      });
+      const reader = ObjectType.getInstance(defaultTypeRegistry, {
+        z: new BoolType(),
+        a: new BoolType(),
+        m: new BoolType(),
+      });
+
+      // Write in explicit order z, m, a (not alphabetical a, m, z)
+      writer.setFieldOrder(['z', 'm', 'a']);
+      reader.setFieldOrder(['z', 'm', 'a']);
+
+      const stream = new BitStream();
+      writer.writeTo(stream, { z: true, a: false, m: true });
+      stream.setPosition(0);
+      const result = reader.readFrom(stream);
 
       expect(result).toEqual({ z: true, a: false, m: true });
     });

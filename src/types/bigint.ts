@@ -1,6 +1,7 @@
 import { getBigIntBitCount } from '../utils/getBitCount';
 import { IType, ITypeData } from './itype';
 import { IBitWriter, IBitReader } from '../stream/ibitstream';
+import { defaultTypeRegistry } from './registry';
 
 /*
 Currently BigInt is limited to 128 bits, but BigInts could be of any size, 256, 512.
@@ -12,6 +13,7 @@ BigInt is recorded using one's complement.
 */
 export class BigIntType implements IType {
   static readonly type = 'bigint';
+  static { defaultTypeRegistry.add(BigIntType); }
 
   writeTo(writer: IBitWriter, value: bigint): void {
     const size = getBigIntBitCount(value) + 1;
