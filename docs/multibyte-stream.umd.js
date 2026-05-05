@@ -1,8 +1,8 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = global || self, factory(global.MultibyteStream = {}));
-}(this, (function (exports) { 'use strict';
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.MultibyteStream = {}));
+})(this, (function (exports) { 'use strict';
 
     const setDataSourceLength = (source, length) => {
         if (length < source.length) {
@@ -97,6 +97,7 @@
         }
         return list;
     })(MASK_MAX_INDEX);
+    MASKS[MASK_MAX_INDEX];
     const getMaskOfLength = (length) => MASKS[length];
 
     var Endian;
@@ -200,7 +201,7 @@
             return this.read(16);
         }
         readUInt() {
-            return this.read(32);
+            return this.read(32) >>> 0;
         }
     }
 
@@ -231,7 +232,8 @@
                     currentValue = currentValue >>> (leftSize - currentSize);
                 }
                 let currentFrame = this.source.getCurrentFrame();
-                currentFrame = currentFrame | (currentValue << (leftSpace - currentSize));
+                const clearMask = getMaskOfLength(currentSize) << (leftSpace - currentSize);
+                currentFrame = (currentFrame & ~clearMask) | (currentValue << (leftSpace - currentSize));
                 this.source.setCurrentFrame(currentFrame);
                 leftSpace -= currentSize;
                 leftSize -= currentSize;
@@ -370,6 +372,41 @@
         return bits;
     };
 
+    class TypeRegistry {
+        constructor() {
+            this.map = new Map();
+        }
+        add(type) {
+            const keys = type.getTypeKeys();
+            keys.forEach((key) => this.addTypeFor(key, type));
+        }
+        addTypeFor(key, type) {
+            this.map.set(key, type);
+        }
+        hasTypeFor(key) {
+            return this.map.has(key);
+        }
+        getTypeFor(key) {
+            return this.map.get(key);
+        }
+        fromObject(data) {
+            const definition = this.getTypeFor(data.type);
+            if (!definition) {
+                throw new Error(`Data type "${data.type}" cannot be found`);
+            }
+            return definition.fromObject(data);
+        }
+    }
+    const defaultTypeRegistry = new TypeRegistry();
+    const addTypeDefinition = (...types) => types.map((type) => defaultTypeRegistry.add(type));
+    const addTypeDefinitionFor = (key, type) => defaultTypeRegistry.addTypeFor(key, type);
+    const hasTypeDefinitionFor = (key) => defaultTypeRegistry.hasTypeFor(key);
+    const getTypeDefinitionFor = (key) => defaultTypeRegistry.getTypeFor(key);
+    const getValueTypeDefinition = (value) => {
+        const { constructor } = Object.getPrototypeOf(value);
+        return getTypeDefinitionFor(constructor);
+    };
+
     /*
     Currently BigInt is limited to 128 bits, but BigInts could be of any size, 256, 512.
     TODO Make most significant bit to signal about normal or extended mode.
@@ -419,6 +456,9 @@
         }
     }
     BigIntType.type = 'bigint';
+    (() => {
+        defaultTypeRegistry.add(BigIntType);
+    })();
 
     const readLength = (reader, blocks, multiplierShift = 2) => {
         const length = (reader.read(blocks) + 1) << multiplierShift;
@@ -482,15 +522,19 @@
         }
         readFrom(reader) {
             let value = '';
-            let charCode = 20;
+            let charCode = 0;
             let partCount = 0;
+            let started = false;
             let length = readShortLength(reader);
             while (length) {
                 const part = reader.read(8);
                 if (part >> 7 === 1) {
-                    value = `${value}${String.fromCharCode(charCode)}`;
+                    if (started) {
+                        value += String.fromCharCode(charCode);
+                    }
                     charCode = part & 0b1111111;
                     partCount = 1;
+                    started = true;
                 }
                 else {
                     charCode = ((part & 0b1111111) << (7 * partCount)) | charCode;
@@ -498,8 +542,9 @@
                 }
                 length--;
             }
-            // add last read char code and remove first space
-            value = `${value.substr(1)}${String.fromCharCode(charCode)}`;
+            if (started) {
+                value += String.fromCharCode(charCode);
+            }
             return value;
         }
         toObject() {
@@ -519,6 +564,9 @@
         }
     }
     StringType.type = 'string';
+    (() => {
+        defaultTypeRegistry.add(StringType);
+    })();
 
     const MAX_POW_INDEX = 31;
     const POWS = ((index) => {
@@ -574,41 +622,6 @@
         return value & mask;
     };
 
-    class TypeRegistry {
-        constructor() {
-            this.map = new Map();
-        }
-        add(type) {
-            const keys = type.getTypeKeys();
-            keys.forEach((key) => this.addTypeFor(key, type));
-        }
-        addTypeFor(key, type) {
-            this.map.set(key, type);
-        }
-        hasTypeFor(key) {
-            return this.map.has(key);
-        }
-        getTypeFor(key) {
-            return this.map.get(key);
-        }
-        fromObject(data) {
-            const definition = this.getTypeFor(data.type);
-            if (!definition) {
-                throw new Error(`Data type "${data.type}" cannot be found`);
-            }
-            return definition.fromObject(data);
-        }
-    }
-    const defaultTypeRegistry = new TypeRegistry();
-    const addTypeDefinition = (...types) => types.map((type) => defaultTypeRegistry.add(type));
-    const addTypeDefinitionFor = (key, type) => defaultTypeRegistry.addTypeFor(key, type);
-    const hasTypeDefinitionFor = (key) => defaultTypeRegistry.hasTypeFor(key);
-    const getTypeDefinitionFor = (key) => defaultTypeRegistry.getTypeFor(key);
-    const getValueTypeDefinition = (value) => {
-        const { constructor } = Object.getPrototypeOf(value);
-        return getTypeDefinitionFor(constructor);
-    };
-
     const writeInteger = (writer, value, size, signed, twosc) => {
         if (!signed) {
             writer.write(value < 0 ? -value : value, size);
@@ -625,7 +638,7 @@
     const readInteger = (reader, size, signed, twosc) => {
         const value = reader.read(size);
         if (!signed) {
-            return value;
+            return value >>> 0;
         }
         return (twosc
             ? fromTwosComplementRepresentation
@@ -690,6 +703,9 @@
         }
     }
     IntType.type = 'int';
+    (() => {
+        defaultTypeRegistry.add(IntType);
+    })();
     class ShortType extends IntType {
         constructor() {
             super(true, 16);
@@ -711,6 +727,9 @@
         }
     }
     ShortType.type = 'short';
+    (() => {
+        defaultTypeRegistry.add(ShortType);
+    })();
     class ByteType extends IntType {
         constructor() {
             super(true, 8);
@@ -732,6 +751,9 @@
         }
     }
     ByteType.type = 'byte';
+    (() => {
+        defaultTypeRegistry.add(ByteType);
+    })();
     class UIntType extends IntType {
         constructor(size = 0) {
             super(false, size);
@@ -755,6 +777,9 @@
         }
     }
     UIntType.type = 'uint';
+    (() => {
+        defaultTypeRegistry.add(UIntType);
+    })();
     class UShortType extends IntType {
         constructor() {
             super(false, 16);
@@ -776,6 +801,9 @@
         }
     }
     UShortType.type = 'ushort';
+    (() => {
+        defaultTypeRegistry.add(UShortType);
+    })();
     class UByteType extends IntType {
         constructor() {
             super(false, 8);
@@ -797,6 +825,9 @@
         }
     }
     UByteType.type = 'ubyte';
+    (() => {
+        defaultTypeRegistry.add(UByteType);
+    })();
 
     class SimpleFloatType extends IntType {
         constructor(signed = true, fractionDigits = 3, size = 0) {
@@ -831,6 +862,9 @@
         }
     }
     SimpleFloatType.type = 'sfloat';
+    (() => {
+        defaultTypeRegistry.add(SimpleFloatType);
+    })();
 
     const readObjectFieldTypes = (data, registry = defaultTypeRegistry, target = {}) => {
         Object.keys(data).forEach((key) => {
@@ -883,6 +917,11 @@
         }
         getSchema() {
             return this.fields;
+        }
+        setFieldOrder(keys) {
+            if (this.fields) {
+                this.fieldList = keys.filter((key) => key in this.fields);
+            }
         }
         writeTo(writer, obj) {
             if (!this.fields) {
@@ -944,6 +983,9 @@
         }
     }
     ObjectType.type = 'object';
+    (() => {
+        defaultTypeRegistry.add(ObjectType);
+    })();
 
     /*
     3 bits -- size of length block
@@ -1004,6 +1046,9 @@
         }
     }
     ArrayType.type = 'array';
+    (() => {
+        defaultTypeRegistry.add(ArrayType);
+    })();
 
     /*
     1 bit -- value
@@ -1032,6 +1077,9 @@
         }
     }
     BoolType.type = 'bool';
+    (() => {
+        defaultTypeRegistry.add(BoolType);
+    })();
 
     /*
      Enumeration type receives an array of values and saves to stream an index of the value.
@@ -1070,13 +1118,6 @@
     }
     EnumType.type = 'enum';
 
-    addTypeDefinition(BoolType);
-    addTypeDefinition(IntType, ShortType, ByteType, UIntType, UShortType, UByteType);
-    addTypeDefinition(SimpleFloatType);
-    addTypeDefinition(BigIntType);
-    addTypeDefinition(StringType);
-    addTypeDefinition(ObjectType);
-    addTypeDefinition(ArrayType);
     const types = {
         BigIntType,
         StringType,
@@ -1169,6 +1210,5 @@
     exports.typedArrayToString = typedArrayToString;
     exports.types = types;
 
-    Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
+}));
+//# sourceMappingURL=multibyte-stream.umd.js.map
